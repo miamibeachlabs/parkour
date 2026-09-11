@@ -10,11 +10,11 @@ Copy this directory, then replace the template identity in:
 2. `index.html`
 3. `manifest.webmanifest`
 4. `wrangler.jsonc`
-5. `service-worker.js`
+5. `service-worker.js` and the matching local cache prefix in `src/main.tsx`
 6. `src/ui/App.tsx`
 7. the three icon files
 
-The `cachePrefix` in `service-worker.js` must be unique to the application. Cache Storage is shared by applications on the same origin.
+The cache prefix in `service-worker.js` and `src/main.tsx` must match and be unique to the application. Cache Storage is shared by applications on the same origin.
 
 Keep the surrounding architecture intact unless the application has a concrete reason to differ. Put reusable data structures and pure domain models under `src/data` and `src/domain`; keep Preact, browser storage, service workers, and Cloudflare at the edges.
 
@@ -28,6 +28,8 @@ bun run build
 ```
 
 The Cloudflare build command is `bun run build`. The deploy command is `bunx wrangler deploy`. Production deployment should follow the repository's chosen branch policy.
+
+Local development does not retain a service worker or application caches. This keeps refreshes honest while iterating and prevents an installed production-style cache from hiding a newly built interface. The service worker also uses network-first behavior on local hosts while an older registration is being retired.
 
 ## Offline contract
 

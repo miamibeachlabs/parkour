@@ -1,5 +1,6 @@
 const cachePrefix = 'miami-beach-pwa-template-';
 const cacheName = `${cachePrefix}__BUILD__`;
+const developingLocally = ['localhost', '127.0.0.1'].includes(self.location.hostname);
 const appShell = [
   './',
   './manifest.webmanifest',
@@ -32,7 +33,7 @@ const downloadApp = async () => {
 };
 
 self.addEventListener('install', event => {
-  event.waitUntil(downloadApp());
+  event.waitUntil(downloadApp().then(() => developingLocally ? self.skipWaiting() : undefined));
 });
 
 self.addEventListener('activate', event => {
@@ -50,6 +51,11 @@ self.addEventListener('fetch', event => {
   const sameOrigin = new URL(request.url).origin === self.location.origin;
 
   if (request.method !== 'GET' || !sameOrigin) return;
+
+  if (developingLocally) {
+    event.respondWith(fetch(request).catch(() => caches.match(request)));
+    return;
+  }
 
   event.respondWith((async () =>
     await caches.match(request)
