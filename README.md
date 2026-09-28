@@ -5,10 +5,10 @@ An offline-first personal practice queue. Parkour is its first skill pack.
 Skill Queue combines three distinct ideas without collapsing them into one opaque score:
 
 - the skill graph says what is available now;
-- lightweight practice events reveal what is getting stale; and
+- completed training sessions reveal what is getting stale; and
 - the queue explains what deserves attention today.
 
-It is not a workout planner, a duration tracker, or a claim to measure mastery. A practice event records only a skill, day, and light/medium/intensive effort. You explicitly mark a skill as learning or acquired; acquired skills remain in the queue when they need maintenance.
+It is not a duration tracker or a claim to measure mastery. An open session holds the skills you choose to work on today, each Medium by default. Only **Finish session** turns those choices into completed practice history. You explicitly mark a skill as learning or acquired; acquired skills remain in the queue when they need maintenance.
 
 ## Commands
 
@@ -24,7 +24,7 @@ The build emits static browser files in `dist/`. `wrangler.jsonc` serves them th
 
 ## Model
 
-`src/domain/SkillGraph.ts` contains the reusable graph vocabulary: skills, categories, hard `requires` edges, soft `helps` edges, practice events, and a user profile.
+`src/domain/SkillGraph.ts` contains the reusable graph vocabulary: skills, categories, hard `requires` edges, soft `helps` edges, open sessions, completed sessions, and a user profile. Completed sessions own the historical facts; the queue derives individual practice events from their entries when calculating freshness.
 
 `src/domain/PracticeQueue.ts` derives the practice queue, category freshness, learning frontier, and locked skills. It is pure TypeScript: no Preact, storage, or Parkour knowledge. Hard requirements only decide availability. Importance, individual practice debt, category neglect, learning state, and the number of unlocked skills provide small, visible ranking influences.
 

@@ -40,12 +40,33 @@ export type PracticeEvent = Readonly<{
   intensity: PracticeIntensity;
 }>;
 
-export type SkillProfile = Readonly<{
-  states: Readonly<Record<SkillId, SkillState>>;
-  practice: readonly PracticeEvent[];
+export type SessionEntry = Readonly<{
+  skill: SkillId;
+  intensity: PracticeIntensity;
 }>;
 
-export const emptyProfile = (): SkillProfile => ({ states: {}, practice: [] });
+export type CompletedSession = Readonly<{
+  id: string;
+  date: string;
+  entries: readonly SessionEntry[];
+}>;
+
+export type OpenSession = Readonly<{
+  startedAt: string;
+  entries: readonly SessionEntry[];
+}>;
+
+export type SkillProfile = Readonly<{
+  states: Readonly<Record<SkillId, SkillState>>;
+  sessions: readonly CompletedSession[];
+  openSession?: OpenSession;
+}>;
+
+export const emptyProfile = (): SkillProfile => ({ states: {}, sessions: [] });
+
+export const practiceEvents = (profile: SkillProfile): readonly PracticeEvent[] =>
+  profile.sessions.flatMap(session =>
+    session.entries.map(entry => ({ ...entry, date: session.date })));
 
 export const incoming = (
   pack: SkillPack,
@@ -66,7 +87,7 @@ export const isSatisfied = (profile: SkillProfile, skill: SkillId) =>
 
 export const progressOf = (profile: SkillProfile, skill: SkillId): SkillProgress =>
   profile.states[skill]
-  ?? (profile.practice.some(event => event.skill === skill) ? 'learning' : 'not-started');
+  ?? (practiceEvents(profile).some(event => event.skill === skill) ? 'learning' : 'not-started');
 
 export const isUnlocked = (pack: SkillPack, profile: SkillProfile, skill: SkillId) =>
   incoming(pack, skill, 'requires').every(relation => isSatisfied(profile, relation.from));

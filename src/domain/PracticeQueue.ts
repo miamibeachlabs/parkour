@@ -8,6 +8,7 @@ import {
   incoming,
   isUnlocked,
   outgoing,
+  practiceEvents,
   progressOf,
 } from './SkillGraph.ts';
 
@@ -58,8 +59,9 @@ export const practiceQueue = (
 ): readonly QueueItem[] => pack.skills
   .filter(skill => isUnlocked(pack, profile, skill.id))
   .map(skill => {
-    const latest = latestPractice(profile.practice, on, skill.id);
-    const categoryLatest = latestPractice(profile.practice, on, undefined, skill.category, pack);
+    const events = practiceEvents(profile);
+    const latest = latestPractice(events, on, skill.id);
+    const categoryLatest = latestPractice(events, on, undefined, skill.category, pack);
     const skillDebt = debt(latest);
     const categoryDebt = debt(categoryLatest);
     const progress = progressOf(profile, skill.id);
@@ -114,14 +116,14 @@ export const needsAttention = (pack: SkillPack, profile: SkillProfile, on = new 
     progressOf(profile, item.skill.id) !== 'learning' || item.freshness !== 'fresh');
 
 export const recentPractice = (pack: SkillPack, profile: SkillProfile) =>
-  [...profile.practice]
+  [...practiceEvents(profile)]
     .sort((left, right) => right.date.localeCompare(left.date))
     .map(event => ({ event, skill: pack.skills.find(skill => skill.id === event.skill) }))
     .filter((item): item is { event: PracticeEvent; skill: Skill } => item.skill !== undefined);
 
 export const categoryFreshness = (pack: SkillPack, profile: SkillProfile, on = new Date()) =>
   pack.categories.map(category => {
-    const latest = latestPractice(profile.practice, on, undefined, category.id, pack);
+    const latest = latestPractice(practiceEvents(profile), on, undefined, category.id, pack);
     const amount = debt(latest);
     return { category, freshness: freshness(amount), daysSincePractice: latest?.days };
   });
