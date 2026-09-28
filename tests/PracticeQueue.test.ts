@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { parkour } from '../src/content/parkour.ts';
-import { isUnlocked, type SkillProfile } from '../src/domain/SkillGraph.ts';
-import { lockedSkills, practiceQueue } from '../src/domain/PracticeQueue.ts';
+import { isUnlocked, progressOf, type SkillProfile } from '../src/domain/SkillGraph.ts';
+import { activeLearning, lockedSkills, needsAttention, practiceQueue } from '../src/domain/PracticeQueue.ts';
 
 const on = new Date('2026-09-27T12:00:00');
 
@@ -37,4 +37,14 @@ test('helpful foundations improve recommendation priority without unlocking a sk
   const precision = practiceQueue(parkour, profile, on)
     .find(item => item.skill.id === 'precision-landing');
   expect(precision?.reasons).toContain('supported by foundations');
+});
+
+test('existing practice becomes a durable learning path until explicitly acquired', () => {
+  const profile: SkillProfile = {
+    states: {},
+    practice: [{ skill: 'safety-vault', date: '2026-09-27', intensity: 'medium' }],
+  };
+  expect(progressOf(profile, 'safety-vault')).toBe('learning');
+  expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('safety-vault');
+  expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).not.toContain('safety-vault');
 });

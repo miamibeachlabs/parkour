@@ -2,6 +2,7 @@ export type SkillId = string;
 export type CategoryId = string;
 export type RelationKind = 'requires' | 'helps';
 export type SkillState = 'learning' | 'acquired';
+export type SkillProgress = 'not-started' | SkillState;
 export type PracticeIntensity = 'light' | 'medium' | 'intensive';
 
 export type Category = Readonly<{
@@ -61,7 +62,11 @@ export const outgoing = (
   relation.from === skill && (kind === undefined || relation.kind === kind));
 
 export const isSatisfied = (profile: SkillProfile, skill: SkillId) =>
-  profile.states[skill] === 'acquired';
+  progressOf(profile, skill) === 'acquired';
+
+export const progressOf = (profile: SkillProfile, skill: SkillId): SkillProgress =>
+  profile.states[skill]
+  ?? (profile.practice.some(event => event.skill === skill) ? 'learning' : 'not-started');
 
 export const isUnlocked = (pack: SkillPack, profile: SkillProfile, skill: SkillId) =>
   incoming(pack, skill, 'requires').every(relation => isSatisfied(profile, relation.from));

@@ -8,6 +8,7 @@ import {
   incoming,
   isUnlocked,
   outgoing,
+  progressOf,
 } from './SkillGraph.ts';
 
 export type Freshness = 'fresh' | 'getting-stale' | 'stale';
@@ -61,7 +62,8 @@ export const practiceQueue = (
     const categoryLatest = latestPractice(profile.practice, on, undefined, skill.category, pack);
     const skillDebt = debt(latest);
     const categoryDebt = debt(categoryLatest);
-    const learning = profile.states[skill.id] !== 'acquired';
+    const progress = progressOf(profile, skill.id);
+    const learning = progress === 'learning';
     const unlocks = outgoing(pack, skill.id, 'requires').length;
     const helpfulFoundations = incoming(pack, skill.id, 'helps')
       .filter(relation => profile.states[relation.from] === 'acquired').length;
@@ -73,7 +75,7 @@ export const practiceQueue = (
       skill.importance === 3 ? 'core foundation' : undefined,
       freshness(skillDebt) === 'stale' ? 'needs refreshing' : undefined,
       freshness(categoryDebt) === 'stale' ? 'category neglected' : undefined,
-      learning ? 'ready to learn' : undefined,
+      learning ? 'actively learning' : progress === 'not-started' ? 'ready to learn' : undefined,
       helpfulFoundations ? 'supported by foundations' : undefined,
       unlocks > 0 ? `unlocks ${unlocks} skill${unlocks === 1 ? '' : 's'}` : undefined,
     ].filter((reason): reason is string => Boolean(reason));
@@ -101,7 +103,21 @@ export const lockedSkills = (pack: SkillPack, profile: SkillProfile): readonly L
     }));
 
 export const readyToLearn = (pack: SkillPack, profile: SkillProfile) =>
-  practiceQueue(pack, profile).filter(item => profile.states[item.skill.id] !== 'acquired');
+  practiceQueue(pack, profile).filter(item => progressOf(profile, item.skill.id) === 'not-started');
+
+export const activeLearning = (pack: SkillPack, profile: SkillProfile) =>
+  pack.skills.filter(skill =>
+    isUnlocked(pack, profile, skill.id) && progressOf(profile, skill.id) === 'learning');
+
+export const needsAttention = (pack: SkillPack, profile: SkillProfile, on = new Date()) =>
+  practiceQueue(pack, profile, on).filter(item =>
+    progressOf(profile, item.skill.id) !== 'learning' || item.freshness !== 'fresh');
+
+export const recentPractice = (pack: SkillPack, profile: SkillProfile) =>
+  [...profile.practice]
+    .sort((left, right) => right.date.localeCompare(left.date))
+    .map(event => ({ event, skill: pack.skills.find(skill => skill.id === event.skill) }))
+    .filter((item): item is { event: PracticeEvent; skill: Skill } => item.skill !== undefined);
 
 export const categoryFreshness = (pack: SkillPack, profile: SkillProfile, on = new Date()) =>
   pack.categories.map(category => {
