@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { parkour } from '../src/content/parkour.ts';
-import { isUnlocked, practiceEvents, progressOf, type SkillProfile } from '../src/domain/SkillGraph.ts';
-import { activeLearning, lockedSkills, needsAttention, practiceQueue } from '../src/domain/PracticeQueue.ts';
+import { isUnlocked, practiceEvents, progressOf, readinessDepth, type SkillProfile } from '../src/domain/SkillGraph.ts';
+import { activeLearning, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
 
 const on = new Date('2026-09-27T12:00:00');
 
@@ -65,4 +65,12 @@ test('completed sessions retain a shared history boundary and per-skill intensit
     { skill: 'animal-landing', intensity: 'medium', date: '2026-09-27' },
     { skill: 'safety-vault', intensity: 'intensive', date: '2026-09-27' },
   ]);
+});
+
+test('the frontier distinguishes skills one and two readiness layers away', () => {
+  const profile: SkillProfile = { states: {}, sessions: [] };
+  expect(readinessDepth(parkour, profile, 'ground-kong')).toBe(1);
+  expect(readinessDepth(parkour, profile, 'kong-vault')).toBe(2);
+  expect(skillsAtReadinessDepth(parkour, profile, 1).map(skill => skill.id)).toContain('ground-kong');
+  expect(skillsAtReadinessDepth(parkour, profile, 2).map(skill => skill.id)).toContain('kong-vault');
 });

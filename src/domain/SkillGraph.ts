@@ -4,6 +4,7 @@ export type RelationKind = 'requires' | 'helps';
 export type SkillState = 'learning' | 'acquired';
 export type SkillProgress = 'not-started' | SkillState;
 export type PracticeIntensity = 'light' | 'medium' | 'intensive';
+export type SessionApproach = 'ready' | 'stretch';
 
 export type Category = Readonly<{
   id: CategoryId;
@@ -43,6 +44,7 @@ export type PracticeEvent = Readonly<{
 export type SessionEntry = Readonly<{
   skill: SkillId;
   intensity: PracticeIntensity;
+  approach?: SessionApproach;
 }>;
 
 export type CompletedSession = Readonly<{
@@ -91,3 +93,17 @@ export const progressOf = (profile: SkillProfile, skill: SkillId): SkillProgress
 
 export const isUnlocked = (pack: SkillPack, profile: SkillProfile, skill: SkillId) =>
   incoming(pack, skill, 'requires').every(relation => isSatisfied(profile, relation.from));
+
+export const readinessDepth = (
+  pack: SkillPack,
+  profile: SkillProfile,
+  skill: SkillId,
+  seen: readonly SkillId[] = [],
+): number => {
+  if (isUnlocked(pack, profile, skill)) return 0;
+  if (seen.includes(skill)) return Infinity;
+  const missing = incoming(pack, skill, 'requires')
+    .filter(relation => !isSatisfied(profile, relation.from));
+  return 1 + Math.max(...missing.map(relation =>
+    readinessDepth(pack, profile, relation.from, [...seen, skill])));
+};

@@ -6,10 +6,12 @@ import {
   type SkillPack,
   type SkillProfile,
   incoming,
+  isSatisfied,
   isUnlocked,
   outgoing,
   practiceEvents,
   progressOf,
+  readinessDepth,
 } from './SkillGraph.ts';
 
 export type Freshness = 'fresh' | 'getting-stale' | 'stale';
@@ -103,6 +105,18 @@ export const lockedSkills = (pack: SkillPack, profile: SkillProfile): readonly L
         .map(relation => pack.skills.find(candidate => candidate.id === relation.from))
         .filter((candidate): candidate is Skill => candidate !== undefined),
     }));
+
+export const skillsAtReadinessDepth = (
+  pack: SkillPack,
+  profile: SkillProfile,
+  depth: number,
+) => pack.skills.filter(skill => readinessDepth(pack, profile, skill.id) === depth);
+
+export const missingRequirements = (pack: SkillPack, profile: SkillProfile, skill: SkillId) =>
+  incoming(pack, skill, 'requires')
+    .filter(relation => !isSatisfied(profile, relation.from))
+    .map(relation => pack.skills.find(candidate => candidate.id === relation.from))
+    .filter((candidate): candidate is Skill => candidate !== undefined);
 
 export const readyToLearn = (pack: SkillPack, profile: SkillProfile) =>
   practiceQueue(pack, profile).filter(item => progressOf(profile, item.skill.id) === 'not-started');
