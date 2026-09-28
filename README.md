@@ -1,8 +1,8 @@
-# Skill Queue
+# Parkour Practice
 
-An offline-first personal practice queue. Parkour is its first skill pack.
+An offline-first Parkour practice queue and skill map, intended for `parkour.miamibeachlabs.com`.
 
-Skill Queue combines three distinct ideas without collapsing them into one opaque score:
+Parkour Practice combines three distinct ideas without collapsing them into one opaque score:
 
 - the skill graph says what is available now;
 - completed training sessions reveal what is getting stale; and
@@ -35,9 +35,9 @@ The build emits static browser files in `dist/`. `wrangler.jsonc` serves them th
 
 `bun run content` compiles those files into an ignored TypeScript module for the browser. It rejects duplicate IDs, missing category or skill references, duplicate/conflicting relationships, self-relations, and cycles in `requires`. The YAML is the only authored source; the generated module is a disposable build artifact.
 
-`src/infrastructure/LocalProfile.ts` is the browser-storage boundary. The profile lives only in the current browser and origin. Clearing site data removes it; there is no account, sync service, or server.
+`src/infrastructure/LocalProfile.ts` is the browser-storage boundary. The profile lives only in the current browser and origin. Its previous local Skill Queue key migrates automatically on the next local visit; a deployment at `parkour.miamibeachlabs.com` naturally begins with its own browser-local profile. Clearing site data removes it; there is no account, sync service, or server.
 
-The core is intentionally app-local for now. If several domain packs need genuinely separate applications later, the two `src/domain/` modules can move into a small shared library without changing their public model or bringing browser/UI code along.
+The core is intentionally app-local for now. If several training products need genuinely separate applications later, the two `src/domain/` modules can move into a small shared library without changing their public model or bringing browser/UI code along.
 
 ## Offline use
 

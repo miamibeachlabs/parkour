@@ -5,7 +5,8 @@ import {
   type SkillProfile,
 } from '../domain/SkillGraph.ts';
 
-const storageKey = 'skill-queue-profile-v1';
+const storageKey = 'parkour-profile-v1';
+const legacyStorageKeys = ['skill-queue-profile-v1'];
 
 const intensities: readonly PracticeIntensity[] = ['light', 'medium', 'intensive'];
 const isIntensity = (value: unknown): value is PracticeIntensity =>
@@ -21,7 +22,8 @@ const legacySessions = (practice: unknown): readonly CompletedSession[] =>
       : []) : [];
 
 export const loadProfile = (): SkillProfile => {
-  const saved = localStorage.getItem(storageKey);
+  const saved = localStorage.getItem(storageKey)
+    ?? legacyStorageKeys.map(key => localStorage.getItem(key)).find(Boolean);
   if (!saved) return emptyProfile();
 
   try {
@@ -39,4 +41,7 @@ export const loadProfile = (): SkillProfile => {
 };
 
 export const saveProfile = (profile: SkillProfile) =>
-  localStorage.setItem(storageKey, JSON.stringify(profile));
+  {
+    localStorage.setItem(storageKey, JSON.stringify(profile));
+    legacyStorageKeys.forEach(key => localStorage.removeItem(key));
+  };

@@ -1,7 +1,7 @@
 {
-  "name": "Skill Queue",
-  "short_name": "Skill Queue",
-  "description": "An offline-first practice queue and skill tech tree.",
+  "name": "Parkour Practice",
+  "short_name": "Parkour",
+  "description": "An offline-first Parkour practice queue and skill map.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

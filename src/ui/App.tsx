@@ -94,7 +94,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
 
   return <main class="workspace">
     <header class="masthead">
-      <div><p class="eyebrow">MIAMI BEACH LABS · {pack.name.toUpperCase()}</p><h1>Skill Queue<span>.</span></h1><p class="lede">Keep your active curriculum in view, then let freshness show what needs attention.</p></div>
+      <div><p class="eyebrow">MIAMI BEACH LABS · {pack.name.toUpperCase()}</p><h1>Parkour Practice<span>.</span></h1><p class="lede">Keep your active curriculum in view, then let freshness show what needs attention.</p></div>
       <div class="legend" aria-label="Practice freshness legend"><span class="fresh">Fresh</span><span class="aging">Getting stale</span><span class="stale">Stale</span></div>
     </header>
 

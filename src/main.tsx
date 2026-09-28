@@ -15,7 +15,7 @@ if ('serviceWorker' in navigator && developingLocally)
       .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
       .then(() => caches.keys())
       .then(names => Promise.all(names
-        .filter(name => name.startsWith('skill-queue-'))
+        .filter(name => name.startsWith('parkour-') || name.startsWith('skill-queue-'))
         .map(name => caches.delete(name))))
       .catch(error => console.error('Could not clear local preview caches.', error));
   });

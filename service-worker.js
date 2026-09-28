@@ -1,4 +1,4 @@
-const cachePrefix = 'skill-queue-';
+const cachePrefix = 'parkour-';
 const cacheName = `${cachePrefix}__BUILD__`;
 const developingLocally = ['localhost', '127.0.0.1'].includes(self.location.hostname);
 const appShell = [
