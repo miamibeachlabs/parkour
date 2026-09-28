@@ -1,6 +1,8 @@
 import {
   type CategoryId,
+  type CompletedSession,
   type PracticeEvent,
+  type SessionEntry,
   type Skill,
   type SkillId,
   type SkillPack,
@@ -129,11 +131,21 @@ export const needsAttention = (pack: SkillPack, profile: SkillProfile, on = new 
   practiceQueue(pack, profile, on).filter(item =>
     progressOf(profile, item.skill.id) !== 'learning' || item.freshness !== 'fresh');
 
-export const recentPractice = (pack: SkillPack, profile: SkillProfile) =>
-  [...practiceEvents(profile)]
+export type RecordedSession = Readonly<{
+  session: CompletedSession;
+  entries: readonly Readonly<{ entry: SessionEntry; skill: Skill }>[];
+}>;
+
+export const completedSessions = (pack: SkillPack, profile: SkillProfile): readonly RecordedSession[] =>
+  [...profile.sessions]
     .sort((left, right) => right.date.localeCompare(left.date))
-    .map(event => ({ event, skill: pack.skills.find(skill => skill.id === event.skill) }))
-    .filter((item): item is { event: PracticeEvent; skill: Skill } => item.skill !== undefined);
+    .map(session => ({
+      session,
+      entries: session.entries
+        .map(entry => ({ entry, skill: pack.skills.find(skill => skill.id === entry.skill) }))
+        .filter((item): item is { entry: SessionEntry; skill: Skill } => item.skill !== undefined),
+    }))
+    .filter(session => session.entries.length > 0);
 
 export const categoryFreshness = (pack: SkillPack, profile: SkillProfile, on = new Date()) =>
   pack.categories.map(category => {

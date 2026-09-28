@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { parkour } from '../src/generated/parkour.ts';
-import { isUnlocked, practiceEvents, progressOf, readinessDepth, type SkillProfile } from '../src/domain/SkillGraph.ts';
-import { activeLearning, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
+import { isUnlocked, practiceEvents, progressOf, readinessDepth, removeCompletedSession, type SkillProfile } from '../src/domain/SkillGraph.ts';
+import { activeLearning, completedSessions, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
 
 const on = new Date('2026-09-27T12:00:00');
 
@@ -65,6 +65,18 @@ test('completed sessions retain a shared history boundary and per-skill intensit
     { skill: 'animal-landing', intensity: 'medium', date: '2026-09-27' },
     { skill: 'safety-vault', intensity: 'intensive', date: '2026-09-27' },
   ]);
+});
+
+test('session history keeps related practice together and supports correcting one session', () => {
+  const profile: SkillProfile = {
+    states: {},
+    sessions: [
+      { id: 'first', date: '2026-09-25', entries: [{ skill: 'animal-landing', intensity: 'light' }] },
+      { id: 'latest', date: '2026-09-27', entries: [{ skill: 'safety-vault', intensity: 'intensive' }] },
+    ],
+  };
+  expect(completedSessions(parkour, profile).map(item => item.session.id)).toEqual(['latest', 'first']);
+  expect(removeCompletedSession(profile, 'latest').sessions.map(session => session.id)).toEqual(['first']);
 });
 
 test('the frontier distinguishes skills one and two readiness layers away', () => {

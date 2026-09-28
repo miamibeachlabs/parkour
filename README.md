@@ -10,6 +10,8 @@ Skill Queue combines three distinct ideas without collapsing them into one opaqu
 
 It is not a duration tracker or a claim to measure mastery. An open session holds the skills you choose to work on today, each Medium by default. Only **Finish session** turns those choices into completed practice history. You explicitly mark a skill as learning or acquired; acquired skills remain in the queue when they need maintenance.
 
+Completed sessions are visible as grouped history, so it is always clear which skills were recorded together and at what intensity. You can remove an individual mistaken session, or use the confirmed **Erase all local progress** action to return this browser to its initial state.
+
 ## Commands
 
 ```sh

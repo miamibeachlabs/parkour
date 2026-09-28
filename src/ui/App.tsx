@@ -8,16 +8,18 @@ import {
   type SkillProfile,
   incoming,
   isUnlocked,
+  emptyProfile,
   practiceEvents,
   progressOf,
+  removeCompletedSession,
 } from '../domain/SkillGraph.ts';
 import {
   activeLearning,
   categoryFreshness,
+  completedSessions,
   missingRequirements,
   needsAttention,
   readyToLearn,
-  recentPractice,
   skillsAtReadinessDepth,
   type QueueItem,
 } from '../domain/PracticeQueue.ts';
@@ -41,7 +43,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   const ready = readyToLearn(pack, profile).slice(0, 4);
   const stretch = skillsAtReadinessDepth(pack, profile, 1);
   const horizon = skillsAtReadinessDepth(pack, profile, 2);
-  const recent = recentPractice(pack, profile).slice(0, 8);
+  const history = completedSessions(pack, profile);
   const freshCategories = categoryFreshness(pack, profile);
   const selectedSkill = pack.skills.find(skill => skill.id === selected);
   const session = profile.openSession;
@@ -83,6 +85,12 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   });
   const setState = (skill: SkillId, state: 'learning' | 'acquired') =>
     setProfile(current => ({ ...current, states: { ...current.states, [skill]: state } }));
+  const removeHistory = (sessionId: string) =>
+    setProfile(current => removeCompletedSession(current, sessionId));
+  const eraseAllProgress = () => {
+    if (confirm('Erase every completed session, skill state, and unfinished session from this browser? This cannot be undone.'))
+      setProfile(emptyProfile());
+  };
 
   return <main class="workspace">
     <header class="masthead">
@@ -118,7 +126,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
         const summary = [`${counts.learning} learning`, `${counts.acquired} acquired`, `${counts.available} available`, `${counts.locked} locked`].filter(part => !part.startsWith('0 ')).join(' · ') || 'Untouched';
         return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.daysSincePractice === undefined ? 'Untouched' : `${freshness.daysSincePractice}d ago`}</small></button></li>;
       })}</ul></section>
-      <section class="surface" aria-labelledby="recent"><p class="eyebrow">EVIDENCE</p><h2 id="recent">Recently practiced</h2>{recent.length ? <ul class="recent-list">{recent.map(({ event, skill }) => <li key={`${event.skill}-${event.date}`}><time>{displayDate(event.date)}</time><button onClick={() => setSelected(skill.id)}>{skill.name}<small>{title(event.intensity)}</small></button></li>)}</ul> : <p class="empty-state">Your practice trail will appear here.</p>}</section>
+      <SessionHistory history={history} onSelect={setSelected} onRemove={removeHistory} onEraseAll={eraseAllProgress} />
     </section>
 
     <section class="split-sections lower-split">
@@ -152,3 +160,5 @@ const SkillDetail = ({ pack, skill, profile, inSession, onClose, onAdd, onSetSta
 const Relationship = ({ title, skills, profile }: { title: string; skills: readonly Skill[]; profile: SkillProfile }) => skills.length ? <section class="relationship"><h3>{title}</h3><ul>{skills.map(skill => <li key={skill.id}>{progressOf(profile, skill.id) === 'acquired' ? '✓' : '○'} {skill.name}</li>)}</ul></section> : null;
 
 const SessionPanel = ({ pack, session, onSelect, onIntensity, onRemove, onFinish }: { pack: SkillPack; session: SkillProfile['openSession']; onSelect: (skill: SkillId) => void; onIntensity: (skill: SkillId, intensity: PracticeIntensity) => void; onRemove: (skill: SkillId) => void; onFinish: () => void }) => session ? <section class="session-panel" aria-labelledby="today-session"><div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="today-session">Today’s session</h2></div><p>{session.entries.length} skill{session.entries.length === 1 ? '' : 's'} selected. Add skills as your training unfolds; finish only when they become history.</p></div><div class="session-entries">{session.entries.map(entry => { const skill = pack.skills.find(item => item.id === entry.skill); return skill ? <article key={entry.skill} class="session-entry"><button class="session-skill" onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{entry.approach === 'stretch' ? 'Stretch · ' : ''}{pack.categories.find(category => category.id === skill.category)?.name}</small></button><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => onIntensity(skill.id, intensity)}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => onRemove(skill.id)} aria-label={`Remove ${skill.name} from today’s session`}>×</button></article> : null; })}</div><button class="finish-session" onClick={onFinish}>Finish session · save {session.entries.length} skill{session.entries.length === 1 ? '' : 's'}</button></section> : <section class="session-empty"><p class="eyebrow">TODAY’S SESSION</p><p>Add skills as you decide to work on them. They become practice history only when you finish the session.</p></section>;
+
+const SessionHistory = ({ history, onSelect, onRemove, onEraseAll }: { history: ReturnType<typeof completedSessions>; onSelect: (skill: SkillId) => void; onRemove: (sessionId: string) => void; onEraseAll: () => void }) => <section class="surface history" aria-labelledby="history"><div class="history-heading"><div><p class="eyebrow">EVIDENCE</p><h2 id="history">Practice history</h2></div>{history.length ? <button class="erase-progress" onClick={onEraseAll}>Erase all local progress</button> : null}</div>{history.length ? <><p class="history-note">Completed sessions stay here as your trail. Remove one to correct it; erasing all progress returns this browser to its initial state.</p><div class="history-list">{history.map(({ session, entries }) => <article class="history-session" key={session.id}><header><strong>{displayDate(session.date)}</strong><small>{entries.length} skill{entries.length === 1 ? '' : 's'}</small><button class="remove-history" onClick={() => onRemove(session.id)}>Remove</button></header><ul>{entries.map(({ entry, skill }) => <li key={skill.id}><button onClick={() => onSelect(skill.id)}>{skill.name}</button><small>{title(entry.intensity)}{entry.approach === 'stretch' ? ' · Stretch' : ''}</small></li>)}</ul></article>)}</div></> : <p class="empty-state">Finished training sessions will appear here, with their individual skills and intensity.</p>}</section>;

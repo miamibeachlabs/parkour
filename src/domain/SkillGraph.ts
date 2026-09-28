@@ -66,6 +66,11 @@ export type SkillProfile = Readonly<{
 
 export const emptyProfile = (): SkillProfile => ({ states: {}, sessions: [] });
 
+export const removeCompletedSession = (profile: SkillProfile, sessionId: string): SkillProfile => ({
+  ...profile,
+  sessions: profile.sessions.filter(session => session.id !== sessionId),
+});
+
 export const practiceEvents = (profile: SkillProfile): readonly PracticeEvent[] =>
   profile.sessions.flatMap(session =>
     session.entries.map(entry => ({ ...entry, date: session.date })));
