@@ -1,11 +1,12 @@
 {
-  "name": "miami-beach-pwa",
+  "name": "skill-queue",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "bun index.html",
     "build": "bun run scripts/build.ts",
-    "check": "bunx --bun typescript@5.9.3 --noEmit"
+    "check": "bunx --bun typescript@5.9.3 --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "preact": "10.29.8"

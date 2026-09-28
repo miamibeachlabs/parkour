@@ -1,7 +1,7 @@
 {
-  "name": "Miami Beach PWA",
-  "short_name": "PWA",
-  "description": "A small offline-first application.",
+  "name": "Skill Queue",
+  "short_name": "Skill Queue",
+  "description": "An offline-first practice queue and skill tech tree.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
