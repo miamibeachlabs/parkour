@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { parkour } from './content/parkour.ts';
+import { parkour } from './generated/parkour.ts';
 import { App } from './ui/App.tsx';
 
 const root = document.querySelector('#app');

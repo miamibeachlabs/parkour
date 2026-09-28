@@ -14,6 +14,7 @@ It is not a duration tracker or a claim to measure mastery. An open session hold
 
 ```sh
 bun install
+bun run content
 bun run dev
 bun test
 bun run check
@@ -28,7 +29,9 @@ The build emits static browser files in `dist/`. `wrangler.jsonc` serves them th
 
 `src/domain/PracticeQueue.ts` derives the practice queue, category freshness, learning frontier, and locked skills. It is pure TypeScript: no Preact, storage, or Parkour knowledge. Hard requirements only decide availability. Importance, individual practice debt, category neglect, learning state, and the number of unlocked skills provide small, visible ranking influences.
 
-`src/content/parkour.ts` is the editable Parkour pack. It owns the category order, descriptions, importance, tutorial links, and graph relationships. The video-derived progression is deliberately conservative: an edge is hard only when it should gate direct recommendation; helpful preparation remains visible without blocking practice.
+`content/parkour/pack.yaml` is the canonical editable catalogue. It owns the category order, descriptions, human-readable importance (`foundational`, `useful`, or `optional`), and tutorial links. `content/parkour/progression.yaml` is the separately editable graph: each key is a target skill and each relationship uses only stable skill IDs. The video-derived progression is deliberately conservative: an edge is hard only when it should gate direct recommendation; helpful preparation remains visible without blocking practice.
+
+`bun run content` compiles those files into an ignored TypeScript module for the browser. It rejects duplicate IDs, missing category or skill references, duplicate/conflicting relationships, self-relations, and cycles in `requires`. The YAML is the only authored source; the generated module is a disposable build artifact.
 
 `src/infrastructure/LocalProfile.ts` is the browser-storage boundary. The profile lives only in the current browser and origin. Clearing site data removes it; there is no account, sync service, or server.
 

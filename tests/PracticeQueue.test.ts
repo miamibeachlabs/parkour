@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { parkour } from '../src/content/parkour.ts';
+import { parkour } from '../src/generated/parkour.ts';
 import { isUnlocked, practiceEvents, progressOf, readinessDepth, type SkillProfile } from '../src/domain/SkillGraph.ts';
 import { activeLearning, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
 

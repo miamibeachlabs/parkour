@@ -1,0 +1,39 @@
+ground-kong:
+  requires:
+    - quadrupedal-movement
+
+kong-vault:
+  requires:
+    - ground-kong
+  helps:
+    - safety-vault
+
+plyometric-jumps:
+  requires:
+    - standing-jump
+
+running-jump:
+  requires:
+    - standing-jump
+  helps:
+    - precision-landing
+
+strides:
+  requires:
+    - running-jump
+
+precision-landing:
+  helps:
+    - animal-landing
+
+shoulder-roll:
+  helps:
+    - sideways-roll
+
+quadrupedal-movement:
+  helps:
+    - monkey-walk
+
+wall-run:
+  helps:
+    - precision-landing

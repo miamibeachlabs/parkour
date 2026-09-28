@@ -3,12 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun index.html",
+    "content": "bun run scripts/generate-content.ts",
+    "dev": "bun run content && bun index.html",
     "build": "bun run scripts/build.ts",
-    "check": "bunx --bun typescript@5.9.3 --noEmit",
-    "test": "bun test"
+    "check": "bun run content && bunx --bun typescript@5.9.3 --noEmit",
+    "test": "bun run content && bun test"
   },
   "dependencies": {
     "preact": "10.29.8"
+  },
+  "devDependencies": {
+    "yaml": "2.9.1"
   }
 }

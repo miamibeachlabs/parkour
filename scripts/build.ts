@@ -1,3 +1,7 @@
+import { generateParkour } from './generate-content.ts';
+
+await generateParkour();
+
 const output = 'dist';
 
 for await (const path of new Bun.Glob(`${output}/*`).scan())
