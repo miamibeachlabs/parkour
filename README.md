@@ -1,42 +1,39 @@
-# Miami Beach PWA
+# Skill Queue
 
-The canonical starting point for small standalone Miami Beach Labs browser applications. It uses Bun, TypeScript, and Preact and deploys as static files through Cloudflare Workers Static Assets.
+An offline-first personal practice queue. Parkour is its first skill pack.
 
-## Start a new application
+Skill Queue combines three distinct ideas without collapsing them into one opaque score:
 
-Copy this directory, then replace the template identity in:
+- the skill graph says what is available now;
+- lightweight practice events reveal what is getting stale; and
+- the queue explains what deserves attention today.
 
-1. `package.json`
-2. `index.html`
-3. `manifest.webmanifest`
-4. `wrangler.jsonc`
-5. `service-worker.js` and the matching local cache prefix in `src/main.tsx`
-6. `src/ui/App.tsx`
-7. the three icon files
-
-The cache prefix in `service-worker.js` and `src/main.tsx` must match and be unique to the application. Cache Storage is shared by applications on the same origin.
-
-Keep the surrounding architecture intact unless the application has a concrete reason to differ. Put reusable data structures and pure domain models under `src/data` and `src/domain`; keep Preact, browser storage, service workers, and Cloudflare at the edges.
+It is not a workout planner, a duration tracker, or a claim to measure mastery. A practice event records only a skill, day, and light/medium/intensive effort. You explicitly mark a skill as learning or acquired; acquired skills remain in the queue when they need maintenance.
 
 ## Commands
 
 ```sh
 bun install
 bun run dev
+bun test
 bun run check
 bun run build
 ```
 
-The Cloudflare build command is `bun run build`. The deploy command is `bunx wrangler deploy`. Production deployment should follow the repository's chosen branch policy.
+The build emits static browser files in `dist/`. `wrangler.jsonc` serves them through Cloudflare Workers Static Assets with no Worker script and `run_worker_first: false`.
 
-Local development does not retain a service worker or application caches. This keeps refreshes honest while iterating and prevents an installed production-style cache from hiding a newly built interface. The service worker also uses network-first behavior on local hosts while an older registration is being retired.
+## Model
 
-## Offline contract
+`src/domain/SkillGraph.ts` contains the reusable graph vocabulary: skills, categories, hard `requires` edges, soft `helps` edges, practice events, and a user profile.
 
-The first online visit downloads the complete application. Later launches read the installed application from cache immediately and work in airplane mode. Registration checks for a changed service worker when connectivity exists. A build fingerprint changes the worker whenever an application file changes, and a new version activates only after its complete shell has downloaded and existing application windows have closed.
+`src/domain/PracticeQueue.ts` derives the practice queue, category freshness, learning frontier, and locked skills. It is pure TypeScript: no Preact, storage, or Parkour knowledge. Hard requirements only decide availability. Importance, individual practice debt, category neglect, learning state, and the number of unlocked skills provide small, visible ranking influences.
 
-Application data belongs in browser storage and must remain usable without a network connection. Schema changes must migrate existing data without erasing it.
+`src/content/parkour.ts` is the editable Parkour pack. It owns the category order, descriptions, importance, tutorial links, and graph relationships. The video-derived progression is deliberately conservative: an edge is hard only when it should gate direct recommendation; helpful preparation remains visible without blocking practice.
 
-## Theme
+`src/infrastructure/LocalProfile.ts` is the browser-storage boundary. The profile lives only in the current browser and origin. Clearing site data removes it; there is no account, sync service, or server.
 
-`styles.css` defines the shared Miami Beach palette as named properties: ink, muted, sand, surface, line, seafoam, turquoise, ocean, coral, and sun. Extend those semantic tokens instead of scattering unrelated colors through application code.
+The core is intentionally app-local for now. If several domain packs need genuinely separate applications later, the two `src/domain/` modules can move into a small shared library without changing their public model or bringing browser/UI code along.
+
+## Offline use
+
+The first online visit downloads the complete app. Later launches use the locally cached shell immediately and remain usable in airplane mode. A newer build downloads completely before it replaces the existing cache. Practice data remains in browser storage through updates.

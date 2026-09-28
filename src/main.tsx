@@ -1,10 +1,11 @@
 import { render } from 'preact';
+import { parkour } from './content/parkour.ts';
 import { App } from './ui/App.tsx';
 
 const root = document.querySelector('#app');
 if (!root) throw new Error('Missing application root');
 
-render(<App />, root);
+render(<App pack={parkour} />, root);
 
 const developingLocally = ['localhost', '127.0.0.1'].includes(location.hostname);
 
