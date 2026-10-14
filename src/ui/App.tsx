@@ -110,7 +110,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     </section>
 
     <section class="queue-section" aria-labelledby="needs-attention">
-      <div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="needs-attention">Needs attention</h2></div><p>Fresh learning skills stay in your curriculum above. This list surfaces stale practice, maintenance, and useful new starts.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="needs-attention">Needs attention</h2></div><p>Skills you are learning stay actionable here, alongside stale practice, maintenance, and useful new starts.</p></div>
       <div class="queue-list">{attention.slice(0, 6).map((item, index) => <SkillRow key={item.skill.id} item={item} index={index + 1} inSession={inSession(item.skill.id)} onAdd={() => addToSession(item.skill.id)} onSelect={() => setSelected(item.skill.id)} />)}</div>
     </section>
 

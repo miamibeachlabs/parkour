@@ -46,7 +46,22 @@ test('existing practice becomes a durable learning path until explicitly acquire
   };
   expect(progressOf(profile, 'safety-vault')).toBe('learning');
   expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('safety-vault');
-  expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).not.toContain('safety-vault');
+  expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).toContain('safety-vault');
+});
+
+test('a completed stretch becomes learning practice even before its hard requirement is acquired', () => {
+  const profile: SkillProfile = {
+    states: { 'ground-kong': 'learning' },
+    sessions: [{
+      id: 'stretch',
+      date: '2026-09-27',
+      entries: [{ skill: 'ground-kong', intensity: 'medium', approach: 'stretch' }],
+    }],
+  };
+  expect(isUnlocked(parkour, profile, 'ground-kong')).toBe(false);
+  expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('ground-kong');
+  expect(practiceQueue(parkour, profile, on).map(item => item.skill.id)).toContain('ground-kong');
+  expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).toContain('ground-kong');
 });
 
 test('completed sessions retain a shared history boundary and per-skill intensity', () => {

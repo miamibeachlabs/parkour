@@ -61,7 +61,8 @@ export const practiceQueue = (
   profile: SkillProfile,
   on = new Date(),
 ): readonly QueueItem[] => pack.skills
-  .filter(skill => isUnlocked(pack, profile, skill.id))
+  .filter(skill =>
+    isUnlocked(pack, profile, skill.id) || progressOf(profile, skill.id) === 'learning')
   .map(skill => {
     const events = practiceEvents(profile);
     const latest = latestPractice(events, on, skill.id);
@@ -125,11 +126,11 @@ export const readyToLearn = (pack: SkillPack, profile: SkillProfile) =>
 
 export const activeLearning = (pack: SkillPack, profile: SkillProfile) =>
   pack.skills.filter(skill =>
-    isUnlocked(pack, profile, skill.id) && progressOf(profile, skill.id) === 'learning');
+    progressOf(profile, skill.id) === 'learning');
 
 export const needsAttention = (pack: SkillPack, profile: SkillProfile, on = new Date()) =>
   practiceQueue(pack, profile, on).filter(item =>
-    progressOf(profile, item.skill.id) !== 'learning' || item.freshness !== 'fresh');
+    progressOf(profile, item.skill.id) === 'learning' || item.freshness !== 'fresh');
 
 export type RecordedSession = Readonly<{
   session: CompletedSession;
