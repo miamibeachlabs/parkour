@@ -73,7 +73,7 @@ export const practiceQueue = (
     const learning = progress === 'learning';
     const unlocks = outgoing(pack, skill.id, 'requires').length;
     const helpfulFoundations = incoming(pack, skill.id, 'helps')
-      .filter(relation => profile.states[relation.from] === 'acquired').length;
+      .filter(relation => isSatisfied(profile, relation.from)).length;
     const priority = skill.importance * (skillDebt + categoryDebt * .45)
       + (learning ? 1 : 0)
       + unlocks * .2
@@ -104,7 +104,7 @@ export const lockedSkills = (pack: SkillPack, profile: SkillProfile): readonly L
     .map(skill => ({
       skill,
       missing: incoming(pack, skill.id, 'requires')
-        .filter(relation => profile.states[relation.from] !== 'acquired')
+        .filter(relation => !isSatisfied(profile, relation.from))
         .map(relation => pack.skills.find(candidate => candidate.id === relation.from))
         .filter((candidate): candidate is Skill => candidate !== undefined),
     }));

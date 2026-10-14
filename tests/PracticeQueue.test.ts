@@ -5,12 +5,26 @@ import { activeLearning, completedSessions, lockedSkills, needsAttention, practi
 
 const on = new Date('2026-09-27T12:00:00');
 
-test('hard prerequisites lock the kong vault', () => {
+test('unpracticed prerequisites hold back the kong vault by default', () => {
   expect(isUnlocked(parkour, { states: {}, sessions: [] }, 'kong-vault')).toBe(false);
   expect(isUnlocked(parkour, {
     states: { 'ground-kong': 'acquired' },
     sessions: [],
   }, 'kong-vault')).toBe(true);
+});
+
+test('completed practice establishes the learner frontier without claiming acquisition', () => {
+  const profile: SkillProfile = {
+    states: { 'ground-kong': 'learning' },
+    sessions: [{
+      id: 'ground-kong',
+      date: '2026-09-27',
+      entries: [{ skill: 'ground-kong', intensity: 'medium', approach: 'stretch' }],
+    }],
+  };
+  expect(isUnlocked(parkour, profile, 'ground-kong')).toBe(true);
+  expect(isUnlocked(parkour, profile, 'kong-vault')).toBe(true);
+  expect(profile.states['ground-kong']).toBe('learning');
 });
 
 test('the queue surfaces stale, foundational skills first', () => {
@@ -49,7 +63,7 @@ test('existing practice becomes a durable learning path until explicitly acquire
   expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).toContain('safety-vault');
 });
 
-test('a completed stretch becomes learning practice even before its hard requirement is acquired', () => {
+test('a completed stretch becomes learning practice and advances the frontier', () => {
   const profile: SkillProfile = {
     states: { 'ground-kong': 'learning' },
     sessions: [{
@@ -58,7 +72,7 @@ test('a completed stretch becomes learning practice even before its hard require
       entries: [{ skill: 'ground-kong', intensity: 'medium', approach: 'stretch' }],
     }],
   };
-  expect(isUnlocked(parkour, profile, 'ground-kong')).toBe(false);
+  expect(isUnlocked(parkour, profile, 'ground-kong')).toBe(true);
   expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('ground-kong');
   expect(practiceQueue(parkour, profile, on).map(item => item.skill.id)).toContain('ground-kong');
   expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).toContain('ground-kong');

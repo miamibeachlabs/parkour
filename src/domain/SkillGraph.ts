@@ -89,15 +89,20 @@ export const outgoing = (
 ) => pack.relations.filter(relation =>
   relation.from === skill && (kind === undefined || relation.kind === kind));
 
+// Requirements describe the default route, not a claim that every learner must
+// traverse it. Completed practice is evidence that a skill is usable enough to
+// establish the learner's frontier, while Acquired remains an explicit mastery
+// decision.
 export const isSatisfied = (profile: SkillProfile, skill: SkillId) =>
-  progressOf(profile, skill) === 'acquired';
+  progressOf(profile, skill) !== 'not-started';
 
 export const progressOf = (profile: SkillProfile, skill: SkillId): SkillProgress =>
   profile.states[skill]
   ?? (practiceEvents(profile).some(event => event.skill === skill) ? 'learning' : 'not-started');
 
 export const isUnlocked = (pack: SkillPack, profile: SkillProfile, skill: SkillId) =>
-  incoming(pack, skill, 'requires').every(relation => isSatisfied(profile, relation.from));
+  isSatisfied(profile, skill)
+  || incoming(pack, skill, 'requires').every(relation => isSatisfied(profile, relation.from));
 
 export const readinessDepth = (
   pack: SkillPack,
