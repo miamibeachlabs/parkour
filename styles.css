@@ -75,10 +75,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .coverage-list li:last-child .coverage-button, .plain-list li:last-child button { border-bottom: 0; }
 .plain-list span { color: var(--turquoise); font-size: 1.25rem; }
 .history-heading { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+.backup-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }.backup-actions button, .edit-history { min-height: 34px; padding: 6px 9px; color: var(--ocean); background: white; border: 1px solid #b9cac5; border-radius: 6px; font-size: .74rem; font-weight: 700; }.backup-actions button:hover, .edit-history:hover { background: #edf7f2; }.backup-actions input { display: none; }
 .history-note { margin: 12px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
 .history-list { margin-top: 14px; border-top: 1px solid var(--line); }
 .history-session { padding: 12px 0; border-bottom: 1px solid var(--line); }
 .history-session header { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; }
+.history-buttons { display: flex; gap: 6px; align-items: center; }
 .history-session header small, .history-session li small { color: var(--muted); font-size: .74rem; }
 .history-session ul { display: flex; flex-wrap: wrap; gap: 7px 12px; padding: 9px 0 0; margin: 0; list-style: none; }
 .history-session li { display: flex; gap: 5px; align-items: baseline; }
@@ -102,10 +104,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .detail-session { width: 100%; margin: 0 0 22px; }
 .button-group button { flex: 1; min-height: 40px; padding: 7px; background: white; border: 1px solid #b9cac5; border-radius: 6px; font-size: .82rem; }
 .button-group button.selected { color: white; background: var(--turquoise); border-color: var(--turquoise); }.button-group button:disabled { color: #32655d; background: #dcefe7; border-color: #afd5c7; cursor: default; }
+.session-editor h2 { margin-bottom: 8px; }.date-field, .add-skill { display: grid; gap: 6px; margin-top: 22px; color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }.date-field input, .add-skill select { min-height: 42px; padding: 8px 10px; color: var(--ink); background: white; border: 1px solid #b9cac5; border-radius: 6px; font: inherit; letter-spacing: normal; text-transform: none; }.editor-entries { margin-top: 18px; border-top: 1px solid var(--line); }.session-editor .session-entry { grid-template-columns: 1fr auto auto; }.session-editor .finish-session { width: 100%; }.session-editor .finish-session:disabled { color: #8b9895; background: #d7ded7; border-color: #d7ded7; cursor: not-allowed; }
 footer { margin: 30px 0 6px; color: var(--muted); font-size: .8rem; text-align: center; }
 
 @media (max-width: 620px) {
   .workspace { padding: 30px 16px; }.masthead, .section-heading { display: block; }.legend { justify-content: flex-start; margin-top: 18px; }.section-heading > p { margin-top: 10px; }
-  .split-sections { grid-template-columns: 1fr; }.locked-list { grid-template-columns: 1fr; }.skill-summary small { white-space: normal; }.detail { padding: 48px 22px; }.session-entry { grid-template-columns:1fr auto; }.intensity-picker { grid-column:1 / -1; }.remove-session { grid-column:2; grid-row:1; }.history-heading { align-items: start; }.history-session header { grid-template-columns: 1fr auto; }.remove-history { grid-column: 2; grid-row: 1 / span 2; }
+  .split-sections { grid-template-columns: 1fr; }.locked-list { grid-template-columns: 1fr; }.skill-summary small { white-space: normal; }.detail { padding: 48px 22px; }.session-entry { grid-template-columns:1fr auto; }.intensity-picker { grid-column:1 / -1; }.remove-session { grid-column:2; grid-row:1; }.history-heading { align-items: start; }.history-session header { grid-template-columns: 1fr auto; }.history-buttons { grid-column: 2; grid-row: 1 / span 2; flex-direction: column; align-items: stretch; }.remove-history { grid-column: auto; grid-row: auto; }.session-editor .session-entry { grid-template-columns: 1fr auto; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

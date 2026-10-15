@@ -71,6 +71,15 @@ export const removeCompletedSession = (profile: SkillProfile, sessionId: string)
   sessions: profile.sessions.filter(session => session.id !== sessionId),
 });
 
+export const replaceCompletedSession = (
+  profile: SkillProfile,
+  replacement: CompletedSession,
+): SkillProfile => ({
+  ...profile,
+  sessions: profile.sessions.map(session =>
+    session.id === replacement.id ? replacement : session),
+});
+
 export const practiceEvents = (profile: SkillProfile): readonly PracticeEvent[] =>
   profile.sessions.flatMap(session =>
     session.entries.map(entry => ({ ...entry, date: session.date })));

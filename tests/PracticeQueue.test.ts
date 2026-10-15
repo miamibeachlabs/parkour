@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { parkour } from '../src/generated/parkour.ts';
-import { isUnlocked, practiceEvents, progressOf, readinessDepth, removeCompletedSession, type SkillProfile } from '../src/domain/SkillGraph.ts';
+import { isUnlocked, practiceEvents, progressOf, readinessDepth, removeCompletedSession, replaceCompletedSession, type SkillProfile } from '../src/domain/SkillGraph.ts';
+import { exportProfile, importProfile } from '../src/infrastructure/LocalProfile.ts';
 import { activeLearning, completedSessions, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
 
 const on = new Date('2026-09-27T12:00:00');
@@ -106,6 +107,37 @@ test('session history keeps related practice together and supports correcting on
   };
   expect(completedSessions(parkour, profile).map(item => item.session.id)).toEqual(['latest', 'first']);
   expect(removeCompletedSession(profile, 'latest').sessions.map(session => session.id)).toEqual(['first']);
+});
+
+test('editing a session replaces its facts without duplicating the workout', () => {
+  const profile: SkillProfile = {
+    states: {},
+    sessions: [
+      { id: 'first', date: '2026-09-25', entries: [{ skill: 'animal-landing', intensity: 'light' }] },
+      { id: 'latest', date: '2026-09-27', entries: [{ skill: 'safety-vault', intensity: 'intensive' }] },
+    ],
+  };
+  const corrected = replaceCompletedSession(profile, {
+    id: 'latest',
+    date: '2026-09-26',
+    entries: [{ skill: 'safety-vault', intensity: 'medium' }, { skill: 'monkey-walk', intensity: 'light' }],
+  });
+  expect(corrected.sessions).toHaveLength(2);
+  expect(corrected.sessions.find(session => session.id === 'latest')).toEqual({
+    id: 'latest',
+    date: '2026-09-26',
+    entries: [{ skill: 'safety-vault', intensity: 'medium' }, { skill: 'monkey-walk', intensity: 'light' }],
+  });
+});
+
+test('a backup round-trips only known skills from this pack', () => {
+  const profile: SkillProfile = {
+    states: { 'ground-kong': 'learning' },
+    sessions: [{ id: 'beach-session', date: '2026-09-27', entries: [{ skill: 'ground-kong', intensity: 'medium' }] }],
+  };
+  const skillIds = parkour.skills.map(skill => skill.id);
+  expect(importProfile(exportProfile(profile), skillIds)).toEqual(profile);
+  expect(importProfile(exportProfile(profile), skillIds.filter(id => id !== 'ground-kong'))).toBeUndefined();
 });
 
 test('the frontier distinguishes skills one and two readiness layers away', () => {

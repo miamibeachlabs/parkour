@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import {
+  type CompletedSession,
   type PracticeIntensity,
   type SessionApproach,
   type Skill,
@@ -13,6 +14,7 @@ import {
   practiceEvents,
   progressOf,
   removeCompletedSession,
+  replaceCompletedSession,
 } from '../domain/SkillGraph.ts';
 import {
   activeLearning,
@@ -24,7 +26,7 @@ import {
   skillsAtReadinessDepth,
   type QueueItem,
 } from '../domain/PracticeQueue.ts';
-import { loadProfile, saveProfile } from '../infrastructure/LocalProfile.ts';
+import { exportProfile, importProfile, loadProfile, saveProfile } from '../infrastructure/LocalProfile.ts';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const title = (word: string) => word.replace(/(^|-)\w/g, match => match.toUpperCase());
@@ -37,6 +39,7 @@ const displayDate = (date: string) => date === today() ? 'Today' : new Date(`${d
 export const App = ({ pack }: { pack: SkillPack }) => {
   const [profile, setProfile] = useState<SkillProfile>(loadProfile);
   const [selected, setSelected] = useState<SkillId | undefined>();
+  const [editingSession, setEditingSession] = useState<CompletedSession | undefined>();
   useEffect(() => saveProfile(profile), [profile]);
 
   const active = activeLearning(pack, profile);
@@ -88,6 +91,25 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     setProfile(current => ({ ...current, states: { ...current.states, [skill]: state } }));
   const removeHistory = (sessionId: string) =>
     setProfile(current => removeCompletedSession(current, sessionId));
+  const saveHistory = (session: CompletedSession) => {
+    setProfile(current => replaceCompletedSession(current, session));
+    setEditingSession(undefined);
+  };
+  const downloadBackup = () => {
+    const file = new Blob([exportProfile(profile)], { type: 'application/json' });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `parkour-practice-${today()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  const restoreBackup = async (file: File) => {
+    const imported = importProfile(await file.text(), pack.skills.map(skill => skill.id));
+    if (!imported) return alert('That is not a valid Parkour Practice backup for this skill pack.');
+    if (confirm('Replace this browser’s current Parkour history with the imported backup? Export first if you want to keep both.'))
+      setProfile(imported);
+  };
   const eraseAllProgress = () => {
     if (confirm('Erase every completed session, skill state, and unfinished session from this browser? This cannot be undone.'))
       setProfile(emptyProfile());
@@ -129,7 +151,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
         const summary = [`${counts.learning} learning`, `${counts.acquired} acquired`, `${counts.available} available`, `${counts.locked} locked`].filter(part => !part.startsWith('0 ')).join(' · ') || 'Untouched';
         return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.daysSincePractice === undefined ? 'Untouched' : `${freshness.daysSincePractice}d ago`}</small></button></li>;
       })}</ul></section>
-      <SessionHistory history={history} onSelect={setSelected} onRemove={removeHistory} onEraseAll={eraseAllProgress} />
+      <SessionHistory history={history} onSelect={setSelected} onEdit={setEditingSession} onRemove={removeHistory} onEraseAll={eraseAllProgress} onExport={downloadBackup} onImport={restoreBackup} />
     </section>
 
     <section class="split-sections lower-split">
@@ -138,6 +160,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     </section>
 
     {selectedSkill && <SkillDetail pack={pack} skill={selectedSkill} profile={profile} inSession={inSession(selectedSkill.id)} onClose={() => setSelected(undefined)} onSelect={setSelected} onAdd={addToSession} onSetState={setState} />}
+    {editingSession && <SessionEditor pack={pack} session={editingSession} onClose={() => setEditingSession(undefined)} onSave={saveHistory} />}
     <footer>Practice stays in this browser and works offline after the first online visit.</footer>
   </main>;
 };
@@ -175,4 +198,24 @@ const Relationship = ({ title, skills, profile, onSelect }: { title: string; ski
 
 const SessionPanel = ({ pack, session, onSelect, onIntensity, onRemove, onFinish }: { pack: SkillPack; session: SkillProfile['openSession']; onSelect: (skill: SkillId) => void; onIntensity: (skill: SkillId, intensity: PracticeIntensity) => void; onRemove: (skill: SkillId) => void; onFinish: () => void }) => session ? <section class="session-panel" aria-labelledby="today-session"><div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="today-session">Today’s session</h2></div><p>{session.entries.length} skill{session.entries.length === 1 ? '' : 's'} selected. Add skills as your training unfolds; finish only when they become history.</p></div><div class="session-entries">{session.entries.map(entry => { const skill = pack.skills.find(item => item.id === entry.skill); return skill ? <article key={entry.skill} class="session-entry"><button class="session-skill" onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{entry.approach === 'stretch' ? 'Stretch · ' : ''}{pack.categories.find(category => category.id === skill.category)?.name}</small></button><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => onIntensity(skill.id, intensity)}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => onRemove(skill.id)} aria-label={`Remove ${skill.name} from today’s session`}>×</button></article> : null; })}</div><button class="finish-session" onClick={onFinish}>Finish session · save {session.entries.length} skill{session.entries.length === 1 ? '' : 's'}</button></section> : <section class="session-empty"><p class="eyebrow">TODAY’S SESSION</p><p>Add skills as you decide to work on them. They become practice history only when you finish the session.</p></section>;
 
-const SessionHistory = ({ history, onSelect, onRemove, onEraseAll }: { history: ReturnType<typeof completedSessions>; onSelect: (skill: SkillId) => void; onRemove: (sessionId: string) => void; onEraseAll: () => void }) => <section class="surface history" aria-labelledby="history"><div class="history-heading"><div><p class="eyebrow">EVIDENCE</p><h2 id="history">Practice history</h2></div>{history.length ? <button class="erase-progress" onClick={onEraseAll}>Erase all local progress</button> : null}</div>{history.length ? <><p class="history-note">Completed sessions stay here as your trail. Remove one to correct it; erasing all progress returns this browser to its initial state.</p><div class="history-list">{history.map(({ session, entries }) => <article class="history-session" key={session.id}><header><strong>{displayDate(session.date)}</strong><small>{entries.length} skill{entries.length === 1 ? '' : 's'}</small><button class="remove-history" onClick={() => onRemove(session.id)}>Remove</button></header><ul>{entries.map(({ entry, skill }) => <li key={skill.id}><button onClick={() => onSelect(skill.id)}>{skill.name}</button><small>{title(entry.intensity)}{entry.approach === 'stretch' ? ' · Stretch' : ''}</small></li>)}</ul></article>)}</div></> : <p class="empty-state">Finished training sessions will appear here, with their individual skills and intensity.</p>}</section>;
+const SessionHistory = ({ history, onSelect, onEdit, onRemove, onEraseAll, onExport, onImport }: { history: ReturnType<typeof completedSessions>; onSelect: (skill: SkillId) => void; onEdit: (session: CompletedSession) => void; onRemove: (sessionId: string) => void; onEraseAll: () => void; onExport: () => void; onImport: (file: File) => void }) => {
+  const importInput = useRef<HTMLInputElement>(null);
+  return <section class="surface history" aria-labelledby="history"><div class="history-heading"><div><p class="eyebrow">EVIDENCE</p><h2 id="history">Practice history</h2></div>{history.length ? <button class="erase-progress" onClick={onEraseAll}>Erase all local progress</button> : null}</div><div class="backup-actions"><button onClick={onExport}>Export backup</button><button onClick={() => importInput.current?.click()}>Restore backup</button><input ref={importInput} type="file" accept="application/json,.json" onChange={event => { const file = event.currentTarget.files?.[0]; if (file) void onImport(file); event.currentTarget.value = ''; }} /></div>{history.length ? <><p class="history-note">Sessions are your editable trail. Correct the date, skills, or intensity when you remember a workout later. A backup lets you move this trail to another install.</p><div class="history-list">{history.map(({ session, entries }) => <article class="history-session" key={session.id}><header><strong>{displayDate(session.date)}</strong><small>{entries.length} skill{entries.length === 1 ? '' : 's'}</small><span class="history-buttons"><button class="edit-history" onClick={() => onEdit(session)}>Edit</button><button class="remove-history" onClick={() => onRemove(session.id)}>Remove</button></span></header><ul>{entries.map(({ entry, skill }) => <li key={skill.id}><button onClick={() => onSelect(skill.id)}>{skill.name}</button><small>{title(entry.intensity)}{entry.approach === 'stretch' ? ' · Stretch' : ''}</small></li>)}</ul></article>)}</div></> : <p class="empty-state">Finished training sessions will appear here, with their individual skills and intensity.</p>}</section>;
+};
+
+const SessionEditor = ({ pack, session, onClose, onSave }: { pack: SkillPack; session: CompletedSession; onClose: () => void; onSave: (session: CompletedSession) => void }) => {
+  const [draft, setDraft] = useState(session);
+  const updateEntry = (skill: SkillId, update: (entry: typeof draft.entries[number]) => typeof draft.entries[number]) =>
+    setDraft(current => ({ ...current, entries: current.entries.map(entry => entry.skill === skill ? update(entry) : entry) }));
+  const removeEntry = (skill: SkillId) =>
+    setDraft(current => ({ ...current, entries: current.entries.filter(entry => entry.skill !== skill) }));
+  const addEntry = (skill: SkillId) =>
+    setDraft(current => current.entries.some(entry => entry.skill === skill) ? current : ({ ...current, entries: [...current.entries, { skill, intensity: 'medium', approach: 'ready' }] }));
+  return <div class="overlay" role="presentation" onClick={onClose}><aside class="detail session-editor" role="dialog" aria-modal="true" aria-label="Edit practice session" onClick={event => event.stopPropagation()}>
+    <button class="close" onClick={onClose} aria-label="Close editor">×</button><p class="eyebrow">PRACTICE HISTORY</p><h2>Edit workout</h2><p class="description">Correct when it happened, what you practiced, and how hard it felt.</p>
+    <label class="date-field">Date<input type="date" value={draft.date} onInput={event => setDraft(current => ({ ...current, date: event.currentTarget.value }))} /></label>
+    <div class="editor-entries">{draft.entries.map(entry => { const skill = pack.skills.find(item => item.id === entry.skill); return skill ? <article key={entry.skill} class="session-entry"><strong>{skill.name}</strong><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => updateEntry(entry.skill, current => ({ ...current, intensity }))}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => removeEntry(entry.skill)} aria-label={`Remove ${skill.name} from this workout`}>×</button></article> : null; })}</div>
+    <label class="add-skill">Add another skill<select value="" onChange={event => addEntry(event.currentTarget.value)}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !draft.entries.some(entry => entry.skill === skill.id)).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label>
+    <button class="finish-session" onClick={() => onSave(draft)} disabled={!draft.date || draft.entries.length === 0}>Save workout</button>
+  </aside></div>;
+};
