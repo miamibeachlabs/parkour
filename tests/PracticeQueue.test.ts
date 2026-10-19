@@ -80,14 +80,31 @@ test('locked skills explain the unmet hard requirement', () => {
   expect(kong?.missing.map(skill => skill.id)).toEqual(['ground-kong']);
 });
 
-test('helpful foundations improve recommendation priority without unlocking a skill', () => {
+test('supporting practice improves recommendation priority without unlocking a skill', () => {
   const profile: SkillProfile = {
     states: { 'animal-landing': 'acquired' },
     sessions: [],
   };
   const precision = practiceQueue(parkour, profile)
     .find(item => item.skill.id === 'precision-landing');
-  expect(precision?.reasons).toContain('supported by foundations');
+  expect(precision?.reasons).toContain('supported by practice');
+});
+
+test('supporting movements stay out of the Parkour learning frontier until practiced', () => {
+  const profile: SkillProfile = { states: {}, sessions: [] };
+  expect(activeLearning(parkour, profile).map(skill => skill.id)).not.toContain('ginga');
+  expect(needsAttention(parkour, profile).map(item => item.skill.id)).not.toContain('ginga');
+  expect(practiceQueue(parkour, profile).find(item => item.skill.id === 'ginga')?.skill.role).toBe('support');
+});
+
+test('practiced supporting movements remain visible without gating Parkour skills', () => {
+  const profile: SkillProfile = {
+    states: {},
+    sessions: [{ id: 'warmup', date: '2026-10-19', entries: [{ skill: 'ginga', intensity: 'medium' }] }],
+  };
+  expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('ginga');
+  expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ginga');
+  expect(isUnlocked(parkour, profile, 'kong-vault')).toBe(false);
 });
 
 test('existing practice becomes a durable learning path until explicitly acquired', () => {

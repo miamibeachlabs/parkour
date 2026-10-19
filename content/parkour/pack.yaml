@@ -17,6 +17,9 @@ categories:
   - id: walls
     name: Wall skills
     description: Using a wall to redirect or gain height.
+  - id: rotation
+    name: Rotational movement
+    description: Controlled turning and spatial orientation through movement.
 
 skills:
   - id: animal-landing
@@ -115,3 +118,67 @@ skills:
     importance: optional
     description: Use a purposeful foot contact to gain height or redirect movement.
     tutorial: https://www.youtube.com/watch?v=cnijAVbly84
+  - id: ginga
+    name: Ginga
+    category: ground
+    role: support
+    origin: capoeira
+    functions: [locomotion, rhythm, coordination]
+    importance: useful
+    description: A relaxed, shifting base that builds rhythm, coordination, and transitions between positions.
+  - id: negativa
+    name: Negativa
+    category: ground
+    role: support
+    origin: capoeira
+    functions: [ground-transitions, unilateral-support, hip-mobility]
+    importance: useful
+    description: A low, supported position for moving safely between standing and the ground.
+  - id: role
+    name: Rolê
+    category: ground
+    role: support
+    origin: capoeira
+    functions: [ground-transitions, coordination, spatial-awareness]
+    importance: useful
+    description: A circular ground transition that links supported positions with a return to movement.
+  - id: meia-lua-de-frente
+    name: Meia-lua de frente
+    category: rotation
+    role: support
+    origin: capoeira
+    functions: [rotation, balance, coordination]
+    importance: optional
+    description: A controlled front crescent kick for rotational coordination and balance.
+  - id: queixada
+    name: Queixada
+    category: rotation
+    role: support
+    origin: capoeira
+    functions: [rotation, balance, coordination]
+    importance: optional
+    description: A turning, outside-in kick that develops rotation and controlled reorientation.
+  - id: armada
+    name: Armada
+    category: rotation
+    role: support
+    origin: capoeira
+    functions: [rotation, spatial-awareness, balance]
+    importance: optional
+    description: A spinning kick practiced for deliberate turning, orientation, and balance.
+  - id: pogos
+    name: Pogos
+    category: jumping
+    role: support
+    origin: calisthenics
+    functions: [elasticity, ankle-strength, reactive-landing]
+    importance: useful
+    description: Small, controlled two-foot rebounds that develop ankle elasticity and quiet reactive landings.
+  - id: skipping-drills
+    name: Skipping drills
+    category: jumping
+    role: support
+    origin: calisthenics
+    functions: [elasticity, coordination, rhythm]
+    importance: useful
+    description: Light skipping and B-skip patterns for rhythm, coordination, and springy running mechanics.

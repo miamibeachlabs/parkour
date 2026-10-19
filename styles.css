@@ -24,7 +24,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .getting-stale, .aging { background: #faebc9; color: #916419; }
 .stale { background: #f7d8d0; color: #a34c3c; }
 
-.active-section, .queue-section, .catalogue-section { margin-top: 46px; }
+.active-section, .queue-section, .supporting-section, .catalogue-section { margin-top: 46px; }
 .stretch-section { margin-top: 32px; }
 .stretch-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 12px; margin-top: 16px; }
 .stretch-skill { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 14px; background: #fff8e9; border-top: 2px solid #d28a27; border-bottom: 1px solid #ead4aa; }
@@ -54,6 +54,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .queue-list { margin-top: 16px; background: var(--surface); border-top: 2px solid var(--ink); }
 .skill-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; min-height: 79px; border-bottom: 1px solid var(--line); border-left: 4px solid transparent; }
 .skill-row.unpracticed { border-left-color: #b8c4c1; background: #fafbf9; }.skill-row.fresh { border-left-color: #8ec8b7; background: #f6fcf9; }.skill-row.getting-stale { border-left-color: #e4b758; background: #fffaf0; }.skill-row.stale { border-left-color: #e89b8a; background: #fff7f4; }
+.supporting-list { margin-top: 16px; background: var(--surface); border-top: 2px solid #9a7a55; }
+.supporting-row { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 72px; border-bottom: 1px solid var(--line); border-left: 4px solid transparent; }
+.supporting-row.unpracticed { border-left-color: #b8c4c1; background: #fafbf9; }.supporting-row.fresh { border-left-color: #8ec8b7; background: #f6fcf9; }.supporting-row.getting-stale { border-left-color: #e4b758; background: #fffaf0; }.supporting-row.stale { border-left-color: #e89b8a; background: #fff7f4; }
 .rank { color: var(--muted); font-size: .82rem; text-align: center; }
 .skill-summary { min-width: 0; padding: 12px 10px; text-align: left; background: none; border: 0; }
 .skill-summary strong, .skill-summary small { display: block; }
@@ -100,6 +103,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .detail { position: relative; width: min(480px, 100%); min-height: 100%; padding: 48px 30px; overflow: auto; background: var(--surface); }
 .close { position: absolute; top: 16px; right: 18px; width: 38px; height: 38px; border: 0; background: none; font-size: 2rem; line-height: 1; }
 .description { color: var(--muted); line-height: 1.55; }.tutorial { display: inline-block; margin: 4px 0 14px; color: var(--ocean); font-weight: 700; }
+.function-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }.function-tags span { padding: 4px 7px; color: #765c2e; background: #f7ead1; border-radius: 99px; font-size: .72rem; font-weight: 700; }
 .model-note { padding: 10px; background: #faebc9; border-radius: 6px; font-size: .88rem; line-height: 1.45; }
 .relationship h3 { margin: 18px 0 5px; font-size: .83rem; text-transform: uppercase; letter-spacing: .08em; }.relationship ul { padding: 0; margin: 0; list-style: none; }
 .relationship li { display: flex; gap: 6px; align-items: center; min-height: 28px; }.relationship li > span { width: 14px; }.relationship button { padding: 2px 0; color: var(--ocean); text-align: left; background: none; border: 0; font-weight: 650; }

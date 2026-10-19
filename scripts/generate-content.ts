@@ -1,5 +1,5 @@
 import { parseDocument } from 'yaml';
-import type { Relation, SkillPack } from '../src/domain/SkillGraph.ts';
+import type { Relation, SkillPack, SkillRole } from '../src/domain/SkillGraph.ts';
 
 type RecordValue = Record<string, unknown>;
 type Importance = 'foundational' | 'useful' | 'optional';
@@ -12,6 +12,7 @@ const importance: Readonly<Record<Importance, 1 | 2 | 3>> = {
   useful: 2,
   optional: 1,
 };
+const roles: readonly SkillRole[] = ['core', 'support'];
 
 const fail = (message: string): never => { throw new Error(`Parkour content: ${message}`); };
 const record = (value: unknown, context: string): RecordValue =>
@@ -68,12 +69,19 @@ export const generateParkour = async () => {
     if (!categoryIds.has(category)) fail(`skills[${index}] uses unknown category '${category}'.`);
     const ranking = text(item.importance, `skills[${index}].importance`) as Importance;
     if (!(ranking in importance)) fail(`skills[${index}].importance must be foundational, useful, or optional.`);
+    const role = (item.role ?? 'core') as SkillRole;
+    if (!roles.includes(role)) fail(`skills[${index}].role must be core or support.`);
     const tutorial = item.tutorial === undefined ? undefined : text(item.tutorial, `skills[${index}].tutorial`);
+    const functions = item.functions === undefined ? [] : list(item.functions, `skills[${index}].functions`)
+      .map((value, functionIndex) => text(value, `skills[${index}].functions[${functionIndex}]`));
     return {
       id: text(item.id, `skills[${index}].id`),
       name: text(item.name, `skills[${index}].name`),
       category,
       importance: importance[ranking],
+      role,
+      origin: item.origin === undefined ? 'parkour' : text(item.origin, `skills[${index}].origin`),
+      functions,
       description: text(item.description, `skills[${index}].description`),
       ...(tutorial ? { tutorialUrl: tutorial } : {}),
     };
@@ -85,7 +93,7 @@ export const generateParkour = async () => {
   for (const [target, value] of Object.entries(progression)) {
     if (!skillIds.has(target)) fail(`${progressionPath} names unknown skill '${target}'.`);
     const entry = record(value, `${progressionPath}:${target}`);
-    for (const kind of ['requires', 'helps'] as const) {
+    for (const kind of ['requires', 'supports'] as const) {
       if (entry[kind] === undefined) continue;
       for (const sourceId of list(entry[kind], `${progressionPath}:${target}.${kind}`)) {
         const from = text(sourceId, `${progressionPath}:${target}.${kind}`);
@@ -100,7 +108,7 @@ export const generateParkour = async () => {
   if (duplicates) fail(`${progressionPath} repeats ${duplicates.kind} ${duplicates.from} → ${duplicates.to}.`);
   const conflicts = relations.find(relation => relations.some(candidate =>
     candidate.from === relation.from && candidate.to === relation.to && candidate.kind !== relation.kind));
-  if (conflicts) fail(`${progressionPath} defines both requires and helps for ${conflicts.from} → ${conflicts.to}.`);
+  if (conflicts) fail(`${progressionPath} defines both requires and supports for ${conflicts.from} → ${conflicts.to}.`);
   requiresAreAcyclic(relations);
 
   const pack: SkillPack = {

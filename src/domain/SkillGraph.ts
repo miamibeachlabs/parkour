@@ -1,10 +1,11 @@
 export type SkillId = string;
 export type CategoryId = string;
-export type RelationKind = 'requires' | 'helps';
+export type RelationKind = 'requires' | 'supports';
 export type SkillState = 'learning' | 'acquired';
 export type SkillProgress = 'not-started' | SkillState;
 export type PracticeIntensity = 'light' | 'medium' | 'intensive';
 export type SessionApproach = 'ready' | 'stretch';
+export type SkillRole = 'core' | 'support';
 
 export type Category = Readonly<{
   id: CategoryId;
@@ -18,6 +19,9 @@ export type Skill = Readonly<{
   description: string;
   category: CategoryId;
   importance: 1 | 2 | 3;
+  role: SkillRole;
+  origin: string;
+  functions: readonly string[];
   tutorialUrl?: string;
 }>;
 
