@@ -11,7 +11,6 @@ import {
   isUnlocked,
   outgoing,
   emptyProfile,
-  practiceEvents,
   progressOf,
   removeCompletedSession,
   replaceCompletedSession,
@@ -48,6 +47,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
 
   const active = activeLearning(pack, profile);
   const attention = needsAttention(pack, profile);
+  const attentionBySkill = new Map(attention.map(item => [item.skill.id, item]));
   const ready = readyToLearn(pack, profile).slice(0, 4);
   const stretch = skillsAtReadinessDepth(pack, profile, 1);
   const horizon = skillsAtReadinessDepth(pack, profile, 2);
@@ -131,7 +131,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
       <div class="section-heading"><div><p class="eyebrow">YOUR CURRICULUM</p><h2 id="active-learning">Currently learning</h2></div><p>Practicing a skill starts Learning. It stays here until you decide it has become Acquired.</p></div>
       {active.length ? <div class="active-categories">{pack.categories.map(category => {
         const skills = active.filter(skill => skill.category === category.id);
-        return skills.length ? <section key={category.id} class="active-category"><h3>{category.name}</h3>{skills.map(skill => <LearningSkill key={skill.id} skill={skill} inSession={inSession(skill.id)} profile={profile} onAdd={() => addToSession(skill.id)} onSelect={() => setSelected(skill.id)} />)}</section> : null;
+        return skills.length ? <section key={category.id} class="active-category"><h3>{category.name}</h3>{skills.map(skill => <LearningSkill key={skill.id} item={attentionBySkill.get(skill.id)!} inSession={inSession(skill.id)} onAdd={() => addToSession(skill.id)} onSelect={() => setSelected(skill.id)} />)}</section> : null;
       })}</div> : <p class="empty-state">Choose an available skill and record your first practice to begin a visible learning path.</p>}
     </section>
 
@@ -169,7 +169,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   </main>;
 };
 
-const LearningSkill = ({ skill, inSession, profile, onAdd, onSelect }: { skill: Skill; inSession: boolean; profile: SkillProfile; onAdd: () => void; onSelect: () => void }) => <article class="learning-skill"><button onClick={onSelect}><strong>{skill.name}</strong><small>{inSession ? 'In today’s session' : practiceEvents(profile).some(event => event.skill === skill.id) ? 'In progress' : 'Learning'}</small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
+const LearningSkill = ({ item, inSession, onAdd, onSelect }: { item: QueueItem; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class={`learning-skill ${freshnessTone(item)}`}><button onClick={onSelect}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{inSession ? 'In today’s session' : freshnessLabel(item)}</span></small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
 
 const SkillRow = ({ item, index, inSession, onAdd, onSelect }: { item: QueueItem; index: number; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class={`skill-row ${freshnessTone(item)}`}><span class="rank">{index}</span><button class="skill-summary" onClick={onSelect}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{freshnessLabel(item)} · {item.reasons.filter(reason => reason !== 'needs refreshing').slice(0, 2).join(' · ')}</span></small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
 
