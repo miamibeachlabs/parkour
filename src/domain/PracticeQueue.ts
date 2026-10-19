@@ -1,6 +1,7 @@
 import {
   type CategoryId,
   type CompletedSession,
+  type PracticeIntensity,
   type SessionEntry,
   type Skill,
   type SkillId,
@@ -21,6 +22,7 @@ export type QueueItem = Readonly<{
   priority: number;
   freshness: Freshness;
   sessionsSincePractice?: number;
+  lastPracticeIntensity?: PracticeIntensity;
   categoryIsStale: boolean;
   reasons: readonly string[];
 }>;
@@ -30,7 +32,22 @@ export type LockedSkill = Readonly<{
   missing: readonly Skill[];
 }>;
 
-const staleAfterSessions = 4;
+const reserveSessions: Readonly<Record<PracticeIntensity, number>> = {
+  light: 2,
+  medium: 4,
+  intensive: 6,
+};
+
+const intensityRank: Readonly<Record<PracticeIntensity, number>> = {
+  light: 1,
+  medium: 2,
+  intensive: 3,
+};
+
+type PracticeRecency = Readonly<{
+  sessionsSincePractice: number;
+  intensity: PracticeIntensity;
+}>;
 
 const sessionsNewestFirst = (profile: SkillProfile): readonly CompletedSession[] =>
   profile.sessions
@@ -38,25 +55,34 @@ const sessionsNewestFirst = (profile: SkillProfile): readonly CompletedSession[]
     .sort((left, right) => right.session.date.localeCompare(left.session.date) || right.index - left.index)
     .map(({ session }) => session);
 
-const sessionsSincePractice = (
+const latestPractice = (
   profile: SkillProfile,
   pack: SkillPack,
   skill?: SkillId,
   category?: CategoryId,
 ) => {
-  const gap = sessionsNewestFirst(profile).findIndex(session =>
-    session.entries.some(entry =>
+  const sessions = sessionsNewestFirst(profile);
+  for (const [sessionsSincePractice, session] of sessions.entries()) {
+    const entries = session.entries.filter(entry =>
       (!skill || entry.skill === skill)
-      && (!category || pack.skills.find(item => item.id === entry.skill)?.category === category)));
-  return gap === -1 ? undefined : gap;
+      && (!category || pack.skills.find(item => item.id === entry.skill)?.category === category));
+    if (entries.length > 0) {
+      const intensity = entries.reduce((strongest, entry) =>
+        intensityRank[entry.intensity] > intensityRank[strongest] ? entry.intensity : strongest,
+      entries[0].intensity);
+      return { sessionsSincePractice, intensity };
+    }
+  }
+  return undefined;
 };
 
-const debt = (sessions: number | undefined) =>
-  sessions === undefined ? 1 : Math.min(1, sessions / staleAfterSessions);
+const debt = (practice: PracticeRecency | undefined) =>
+  practice === undefined ? 1
+    : Math.min(1, practice.sessionsSincePractice / reserveSessions[practice.intensity]);
 
-const freshness = (sessions: number | undefined): Freshness =>
-  sessions === undefined || sessions >= staleAfterSessions ? 'stale'
-    : sessions === 0 ? 'fresh'
+const freshness = (practice: PracticeRecency | undefined): Freshness =>
+  practice === undefined || practice.sessionsSincePractice >= reserveSessions[practice.intensity] ? 'stale'
+    : practice.sessionsSincePractice < reserveSessions[practice.intensity] * .4 ? 'fresh'
     : 'getting-stale';
 
 export const practiceQueue = (
@@ -66,10 +92,10 @@ export const practiceQueue = (
   .filter(skill =>
     isUnlocked(pack, profile, skill.id) || progressOf(profile, skill.id) === 'learning')
   .map(skill => {
-    const skillGap = sessionsSincePractice(profile, pack, skill.id);
-    const categoryGap = sessionsSincePractice(profile, pack, undefined, skill.category);
-    const skillDebt = debt(skillGap);
-    const categoryDebt = debt(categoryGap);
+    const skillPractice = latestPractice(profile, pack, skill.id);
+    const categoryPractice = latestPractice(profile, pack, undefined, skill.category);
+    const skillDebt = debt(skillPractice);
+    const categoryDebt = debt(categoryPractice);
     const progress = progressOf(profile, skill.id);
     const learning = progress === 'learning';
     const unlocks = outgoing(pack, skill.id, 'requires').length;
@@ -81,8 +107,8 @@ export const practiceQueue = (
       + helpfulFoundations * .3;
     const reasons = [
       skill.importance === 3 ? 'core foundation' : undefined,
-      skillGap !== undefined && freshness(skillGap) === 'stale' ? 'needs refreshing' : undefined,
-      categoryGap !== undefined && freshness(categoryGap) === 'stale' ? 'category neglected' : undefined,
+      skillPractice !== undefined && freshness(skillPractice) === 'stale' ? 'needs refreshing' : undefined,
+      categoryPractice !== undefined && freshness(categoryPractice) === 'stale' ? 'category neglected' : undefined,
       learning ? 'actively learning' : progress === 'not-started' ? 'ready to learn' : undefined,
       helpfulFoundations ? 'supported by foundations' : undefined,
       unlocks > 0 ? `unlocks ${unlocks} skill${unlocks === 1 ? '' : 's'}` : undefined,
@@ -91,9 +117,10 @@ export const practiceQueue = (
     return {
       skill,
       priority,
-      freshness: freshness(skillGap),
-      sessionsSincePractice: skillGap,
-      categoryIsStale: freshness(categoryGap) === 'stale',
+      freshness: freshness(skillPractice),
+      sessionsSincePractice: skillPractice?.sessionsSincePractice,
+      lastPracticeIntensity: skillPractice?.intensity,
+      categoryIsStale: freshness(categoryPractice) === 'stale',
       reasons,
     };
   })
@@ -151,6 +178,6 @@ export const completedSessions = (pack: SkillPack, profile: SkillProfile): reado
 
 export const categoryFreshness = (pack: SkillPack, profile: SkillProfile) =>
   pack.categories.map(category => {
-    const gap = sessionsSincePractice(profile, pack, undefined, category.id);
-    return { category, freshness: freshness(gap), sessionsSincePractice: gap };
+    const practice = latestPractice(profile, pack, undefined, category.id);
+    return { category, freshness: freshness(practice), sessionsSincePractice: practice?.sessionsSincePractice };
   });

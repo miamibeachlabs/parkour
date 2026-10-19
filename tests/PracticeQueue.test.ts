@@ -52,6 +52,28 @@ test('freshness follows completed training sessions rather than calendar days', 
   expect(landing?.freshness).toBe('stale');
 });
 
+test('heavier practice carries freshness through more later training sessions', () => {
+  const profile: SkillProfile = {
+    states: { 'animal-landing': 'acquired', 'sideways-roll': 'acquired', 'shoulder-roll': 'acquired' },
+    sessions: [
+      {
+        id: 'practice',
+        date: '2026-09-20',
+        entries: [
+          { skill: 'animal-landing', intensity: 'light' },
+          { skill: 'sideways-roll', intensity: 'medium' },
+          { skill: 'shoulder-roll', intensity: 'intensive' },
+        ],
+      },
+      { id: 'later', date: '2026-09-22', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+    ],
+  };
+  const bySkill = new Map(practiceQueue(parkour, profile).map(item => [item.skill.id, item]));
+  expect(bySkill.get('animal-landing')?.freshness).toBe('getting-stale');
+  expect(bySkill.get('sideways-roll')?.freshness).toBe('fresh');
+  expect(bySkill.get('shoulder-roll')?.freshness).toBe('fresh');
+});
+
 test('locked skills explain the unmet hard requirement', () => {
   const kong = lockedSkills(parkour, { states: {}, sessions: [] })
     .find(item => item.skill.id === 'kong-vault');

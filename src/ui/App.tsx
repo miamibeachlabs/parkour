@@ -31,8 +31,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const title = (word: string) => word.replace(/(^|-)\w/g, match => match.toUpperCase());
 const freshnessLabel = (item: QueueItem) =>
   item.sessionsSincePractice === undefined ? 'Not practiced yet'
-    : item.sessionsSincePractice === 0 ? 'In your latest session'
-    : `${item.sessionsSincePractice} session${item.sessionsSincePractice === 1 ? '' : 's'} ago · ${item.freshness.replace('-', ' ')}`;
+    : `${item.lastPracticeIntensity ? `${title(item.lastPracticeIntensity)} · ` : ''}${item.sessionsSincePractice === 0 ? 'In your latest session' : `${item.sessionsSincePractice} session${item.sessionsSincePractice === 1 ? '' : 's'} ago`}`;
 const freshnessTone = (item: QueueItem) =>
   item.sessionsSincePractice === undefined ? 'unpracticed' : item.freshness;
 const freshnessName = (item: QueueItem) =>
