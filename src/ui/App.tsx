@@ -34,6 +34,10 @@ const freshnessLabel = (item: QueueItem) =>
   item.daysSincePractice === undefined ? 'Not practiced yet'
     : item.daysSincePractice === 0 ? 'Practiced today'
     : `${item.daysSincePractice}d ago · ${item.freshness.replace('-', ' ')}`;
+const freshnessTone = (item: QueueItem) =>
+  item.daysSincePractice === undefined ? 'unpracticed' : item.freshness;
+const freshnessName = (item: QueueItem) =>
+  item.daysSincePractice === undefined ? 'Not practiced' : item.freshness.replace('-', ' ');
 const displayDate = (date: string) => date === today() ? 'Today' : new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
 export const App = ({ pack }: { pack: SkillPack }) => {
@@ -118,7 +122,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   return <main class="workspace">
     <header class="masthead">
       <div><p class="eyebrow">MIAMI BEACH LABS · {pack.name.toUpperCase()}</p><h1>Parkour Practice<span>.</span></h1><p class="lede">Keep your active curriculum in view, then let freshness show what needs attention.</p></div>
-      <div class="legend" aria-label="Practice freshness legend"><span class="fresh">Fresh</span><span class="aging">Getting stale</span><span class="stale">Stale</span></div>
+      <div class="legend" aria-label="Practice freshness legend"><span class="unpracticed">Not practiced</span><span class="fresh">Fresh</span><span class="aging">Getting stale</span><span class="stale">Stale</span></div>
     </header>
 
     <SessionPanel pack={pack} session={session} onSelect={setSelected} onIntensity={setSessionIntensity} onRemove={removeFromSession} onFinish={finishSession} />
@@ -167,7 +171,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
 
 const LearningSkill = ({ skill, inSession, profile, onAdd, onSelect }: { skill: Skill; inSession: boolean; profile: SkillProfile; onAdd: () => void; onSelect: () => void }) => <article class="learning-skill"><button onClick={onSelect}><strong>{skill.name}</strong><small>{inSession ? 'In today’s session' : practiceEvents(profile).some(event => event.skill === skill.id) ? 'In progress' : 'Learning'}</small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
 
-const SkillRow = ({ item, index, inSession, onAdd, onSelect }: { item: QueueItem; index: number; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class="skill-row"><span class="rank">{index}</span><button class="skill-summary" onClick={onSelect}><strong>{item.skill.name}</strong><small>{freshnessLabel(item)} · {item.reasons.slice(0, 2).join(' · ')}</small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
+const SkillRow = ({ item, index, inSession, onAdd, onSelect }: { item: QueueItem; index: number; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class={`skill-row ${freshnessTone(item)}`}><span class="rank">{index}</span><button class="skill-summary" onClick={onSelect}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{freshnessLabel(item)} · {item.reasons.filter(reason => reason !== 'needs refreshing').slice(0, 2).join(' · ')}</span></small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
 
 const StretchSkill = ({ skill, missing, inSession, onAdd, onSelect }: { skill: Skill; missing: readonly Skill[]; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class="stretch-skill"><button class="stretch-summary" onClick={onSelect}><strong>{skill.name}</strong><small>Suggested first: {missing.map(item => item.name).join(', ')}</small></button><button class={inSession ? 'in-session' : 'stretch-add'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add as stretch'}</button></article>;
 

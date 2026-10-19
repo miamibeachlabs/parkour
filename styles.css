@@ -19,6 +19,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .lede { max-width: 480px; margin: 15px 0 0; color: var(--muted); line-height: 1.55; }
 .legend { display: flex; align-self: flex-end; flex-wrap: wrap; justify-content: flex-end; gap: 8px; color: var(--muted); font-size: .74rem; }
 .legend span, .coverage-list > li > button > small { padding: 4px 7px; border-radius: 99px; font-weight: 650; }
+.unpracticed { background: #e8ecea; color: #667572; }
 .fresh { background: #dcefe7; color: #32655d; }
 .getting-stale, .aging { background: #faebc9; color: #916419; }
 .stale { background: #f7d8d0; color: #a34c3c; }
@@ -50,11 +51,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .empty-state { margin: 14px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
 
 .queue-list { margin-top: 16px; background: var(--surface); border-top: 2px solid var(--ink); }
-.skill-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; min-height: 79px; border-bottom: 1px solid var(--line); }
+.skill-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; min-height: 79px; border-bottom: 1px solid var(--line); border-left: 4px solid transparent; }
+.skill-row.unpracticed { border-left-color: #b8c4c1; background: #fafbf9; }.skill-row.fresh { border-left-color: #8ec8b7; background: #f6fcf9; }.skill-row.getting-stale { border-left-color: #e4b758; background: #fffaf0; }.skill-row.stale { border-left-color: #e89b8a; background: #fff7f4; }
 .rank { color: var(--muted); font-size: .82rem; text-align: center; }
 .skill-summary { min-width: 0; padding: 12px 10px; text-align: left; background: none; border: 0; }
 .skill-summary strong, .skill-summary small { display: block; }
-.skill-summary small { overflow: hidden; margin-top: 5px; color: var(--muted); font-size: .78rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.skill-summary small { display: flex; gap: 6px; align-items: center; overflow: hidden; margin-top: 5px; color: var(--muted); font-size: .78rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }.skill-summary small > span:last-child { overflow: hidden; text-overflow: ellipsis; }.freshness-chip { flex: 0 0 auto; padding: 3px 6px; border-radius: 99px; font-size: .68rem; font-weight: 750; text-transform: capitalize; }
 .practice, .practiced, .in-session { min-height: 40px; margin-right: 12px; padding: 8px 12px; border: 1px solid var(--turquoise); border-radius: 7px; font-size: .82rem; font-weight: 700; }
 .practice { color: white; background: var(--turquoise); }.practice:hover { background: var(--ocean); }
 .stretch-add { min-height: 40px; padding: 8px 12px; color: #68460e; background: #faebc9; border: 1px solid #d28a27; border-radius: 7px; font-size: .82rem; font-weight: 700; }.stretch-add:hover { background: #f4dda9; }
