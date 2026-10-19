@@ -4,8 +4,6 @@ import { isUnlocked, practiceEvents, progressOf, readinessDepth, removeCompleted
 import { exportProfile, importProfile } from '../src/infrastructure/LocalProfile.ts';
 import { activeLearning, completedSessions, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
 
-const on = new Date('2026-09-27T12:00:00');
-
 test('unpracticed prerequisites hold back the kong vault by default', () => {
   expect(isUnlocked(parkour, { states: {}, sessions: [] }, 'kong-vault')).toBe(false);
   expect(isUnlocked(parkour, {
@@ -33,9 +31,25 @@ test('the queue surfaces stale, foundational skills first', () => {
     states: { 'animal-landing': 'acquired' },
     sessions: [{ id: 'landing', date: '2026-09-27', entries: [{ skill: 'animal-landing', intensity: 'medium' }] }],
   };
-  const queue = practiceQueue(parkour, profile, on);
+  const queue = practiceQueue(parkour, profile);
   expect(queue.find(item => item.skill.id === 'animal-landing')?.freshness).toBe('fresh');
   expect(queue[0].skill.id).not.toBe('animal-landing');
+});
+
+test('freshness follows completed training sessions rather than calendar days', () => {
+  const profile: SkillProfile = {
+    states: { 'animal-landing': 'acquired' },
+    sessions: [
+      { id: 'landing', date: '2020-01-01', entries: [{ skill: 'animal-landing', intensity: 'medium' }] },
+      { id: 'one', date: '2026-09-20', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+      { id: 'two', date: '2026-09-22', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+      { id: 'three', date: '2026-09-24', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+      { id: 'four', date: '2026-09-26', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+    ],
+  };
+  const landing = practiceQueue(parkour, profile).find(item => item.skill.id === 'animal-landing');
+  expect(landing?.sessionsSincePractice).toBe(4);
+  expect(landing?.freshness).toBe('stale');
 });
 
 test('locked skills explain the unmet hard requirement', () => {
@@ -49,7 +63,7 @@ test('helpful foundations improve recommendation priority without unlocking a sk
     states: { 'animal-landing': 'acquired' },
     sessions: [],
   };
-  const precision = practiceQueue(parkour, profile, on)
+  const precision = practiceQueue(parkour, profile)
     .find(item => item.skill.id === 'precision-landing');
   expect(precision?.reasons).toContain('supported by foundations');
 });
@@ -61,7 +75,7 @@ test('existing practice becomes a durable learning path until explicitly acquire
   };
   expect(progressOf(profile, 'safety-vault')).toBe('learning');
   expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('safety-vault');
-  expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).toContain('safety-vault');
+  expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('safety-vault');
 });
 
 test('a completed stretch becomes learning practice and advances the frontier', () => {
@@ -75,8 +89,8 @@ test('a completed stretch becomes learning practice and advances the frontier', 
   };
   expect(isUnlocked(parkour, profile, 'ground-kong')).toBe(true);
   expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('ground-kong');
-  expect(practiceQueue(parkour, profile, on).map(item => item.skill.id)).toContain('ground-kong');
-  expect(needsAttention(parkour, profile, on).map(item => item.skill.id)).toContain('ground-kong');
+  expect(practiceQueue(parkour, profile).map(item => item.skill.id)).toContain('ground-kong');
+  expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ground-kong');
 });
 
 test('completed sessions retain a shared history boundary and per-skill intensity', () => {

@@ -1,7 +1,6 @@
 import {
   type CategoryId,
   type CompletedSession,
-  type PracticeEvent,
   type SessionEntry,
   type Skill,
   type SkillId,
@@ -11,7 +10,6 @@ import {
   isSatisfied,
   isUnlocked,
   outgoing,
-  practiceEvents,
   progressOf,
   readinessDepth,
 } from './SkillGraph.ts';
@@ -22,7 +20,7 @@ export type QueueItem = Readonly<{
   skill: Skill;
   priority: number;
   freshness: Freshness;
-  daysSincePractice?: number;
+  sessionsSincePractice?: number;
   categoryIsStale: boolean;
   reasons: readonly string[];
 }>;
@@ -32,43 +30,46 @@ export type LockedSkill = Readonly<{
   missing: readonly Skill[];
 }>;
 
-const day = 86_400_000;
-const refreshDays = { light: 5, medium: 10, intensive: 15 } as const;
+const staleAfterSessions = 4;
 
-const daysBetween = (from: Date, to: Date) =>
-  Math.max(0, Math.floor((to.getTime() - from.getTime()) / day));
+const sessionsNewestFirst = (profile: SkillProfile): readonly CompletedSession[] =>
+  profile.sessions
+    .map((session, index) => ({ session, index }))
+    .sort((left, right) => right.session.date.localeCompare(left.session.date) || right.index - left.index)
+    .map(({ session }) => session);
 
-const latestPractice = (
-  events: readonly PracticeEvent[],
-  on: Date,
+const sessionsSincePractice = (
+  profile: SkillProfile,
+  pack: SkillPack,
   skill?: SkillId,
   category?: CategoryId,
-  pack?: SkillPack,
-) => events
-  .filter(event => !skill || event.skill === skill)
-  .filter(event => !category || pack?.skills.find(item => item.id === event.skill)?.category === category)
-  .map(event => ({ event, days: daysBetween(new Date(`${event.date}T00:00:00`), on) }))
-  .sort((left, right) => left.days - right.days)[0];
+) => {
+  const gap = sessionsNewestFirst(profile).findIndex(session =>
+    session.entries.some(entry =>
+      (!skill || entry.skill === skill)
+      && (!category || pack.skills.find(item => item.id === entry.skill)?.category === category)));
+  return gap === -1 ? undefined : gap;
+};
 
-const debt = (event: { event: PracticeEvent; days: number } | undefined) =>
-  event ? Math.min(1, event.days / refreshDays[event.event.intensity]) : 1;
+const debt = (sessions: number | undefined) =>
+  sessions === undefined ? 1 : Math.min(1, sessions / staleAfterSessions);
 
-const freshness = (amount: number): Freshness =>
-  amount < .4 ? 'fresh' : amount < .85 ? 'getting-stale' : 'stale';
+const freshness = (sessions: number | undefined): Freshness =>
+  sessions === undefined || sessions >= staleAfterSessions ? 'stale'
+    : sessions === 0 ? 'fresh'
+    : 'getting-stale';
 
 export const practiceQueue = (
   pack: SkillPack,
   profile: SkillProfile,
-  on = new Date(),
 ): readonly QueueItem[] => pack.skills
   .filter(skill =>
     isUnlocked(pack, profile, skill.id) || progressOf(profile, skill.id) === 'learning')
   .map(skill => {
-    const events = practiceEvents(profile);
-    const latest = latestPractice(events, on, skill.id);
-    const categoryLatest = latestPractice(events, on, undefined, skill.category, pack);
-    const skillDebt = debt(latest);
-    const categoryDebt = debt(categoryLatest);
+    const skillGap = sessionsSincePractice(profile, pack, skill.id);
+    const categoryGap = sessionsSincePractice(profile, pack, undefined, skill.category);
+    const skillDebt = debt(skillGap);
+    const categoryDebt = debt(categoryGap);
     const progress = progressOf(profile, skill.id);
     const learning = progress === 'learning';
     const unlocks = outgoing(pack, skill.id, 'requires').length;
@@ -80,8 +81,8 @@ export const practiceQueue = (
       + helpfulFoundations * .3;
     const reasons = [
       skill.importance === 3 ? 'core foundation' : undefined,
-      freshness(skillDebt) === 'stale' ? 'needs refreshing' : undefined,
-      freshness(categoryDebt) === 'stale' ? 'category neglected' : undefined,
+      skillGap !== undefined && freshness(skillGap) === 'stale' ? 'needs refreshing' : undefined,
+      categoryGap !== undefined && freshness(categoryGap) === 'stale' ? 'category neglected' : undefined,
       learning ? 'actively learning' : progress === 'not-started' ? 'ready to learn' : undefined,
       helpfulFoundations ? 'supported by foundations' : undefined,
       unlocks > 0 ? `unlocks ${unlocks} skill${unlocks === 1 ? '' : 's'}` : undefined,
@@ -90,9 +91,9 @@ export const practiceQueue = (
     return {
       skill,
       priority,
-      freshness: freshness(skillDebt),
-      daysSincePractice: latest?.days,
-      categoryIsStale: freshness(categoryDebt) === 'stale',
+      freshness: freshness(skillGap),
+      sessionsSincePractice: skillGap,
+      categoryIsStale: freshness(categoryGap) === 'stale',
       reasons,
     };
   })
@@ -128,8 +129,8 @@ export const activeLearning = (pack: SkillPack, profile: SkillProfile) =>
   pack.skills.filter(skill =>
     progressOf(profile, skill.id) === 'learning');
 
-export const needsAttention = (pack: SkillPack, profile: SkillProfile, on = new Date()) =>
-  practiceQueue(pack, profile, on).filter(item =>
+export const needsAttention = (pack: SkillPack, profile: SkillProfile) =>
+  practiceQueue(pack, profile).filter(item =>
     progressOf(profile, item.skill.id) === 'learning' || item.freshness !== 'fresh');
 
 export type RecordedSession = Readonly<{
@@ -148,9 +149,8 @@ export const completedSessions = (pack: SkillPack, profile: SkillProfile): reado
     }))
     .filter(session => session.entries.length > 0);
 
-export const categoryFreshness = (pack: SkillPack, profile: SkillProfile, on = new Date()) =>
+export const categoryFreshness = (pack: SkillPack, profile: SkillProfile) =>
   pack.categories.map(category => {
-    const latest = latestPractice(practiceEvents(profile), on, undefined, category.id, pack);
-    const amount = debt(latest);
-    return { category, freshness: freshness(amount), daysSincePractice: latest?.days };
+    const gap = sessionsSincePractice(profile, pack, undefined, category.id);
+    return { category, freshness: freshness(gap), sessionsSincePractice: gap };
   });

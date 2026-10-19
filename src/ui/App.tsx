@@ -30,13 +30,13 @@ import { exportProfile, importProfile, loadProfile, saveProfile } from '../infra
 const today = () => new Date().toISOString().slice(0, 10);
 const title = (word: string) => word.replace(/(^|-)\w/g, match => match.toUpperCase());
 const freshnessLabel = (item: QueueItem) =>
-  item.daysSincePractice === undefined ? 'Not practiced yet'
-    : item.daysSincePractice === 0 ? 'Practiced today'
-    : `${item.daysSincePractice}d ago · ${item.freshness.replace('-', ' ')}`;
+  item.sessionsSincePractice === undefined ? 'Not practiced yet'
+    : item.sessionsSincePractice === 0 ? 'In your latest session'
+    : `${item.sessionsSincePractice} session${item.sessionsSincePractice === 1 ? '' : 's'} ago · ${item.freshness.replace('-', ' ')}`;
 const freshnessTone = (item: QueueItem) =>
-  item.daysSincePractice === undefined ? 'unpracticed' : item.freshness;
+  item.sessionsSincePractice === undefined ? 'unpracticed' : item.freshness;
 const freshnessName = (item: QueueItem) =>
-  item.daysSincePractice === undefined ? 'Not practiced' : item.freshness.replace('-', ' ');
+  item.sessionsSincePractice === undefined ? 'Not practiced' : item.freshness.replace('-', ' ');
 const displayDate = (date: string) => date === today() ? 'Today' : new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
 export const App = ({ pack }: { pack: SkillPack }) => {
@@ -153,7 +153,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
         const counts = { learning: skills.filter(skill => progressOf(profile, skill.id) === 'learning').length, acquired: skills.filter(skill => progressOf(profile, skill.id) === 'acquired').length, available: skills.filter(skill => progressOf(profile, skill.id) === 'not-started' && isUnlocked(pack, profile, skill.id)).length, locked: skills.filter(skill => !isUnlocked(pack, profile, skill.id)).length };
         const freshness = freshCategories.find(item => item.category.id === category.id);
         const summary = [`${counts.learning} learning`, `${counts.acquired} acquired`, `${counts.available} available`, `${counts.locked} locked`].filter(part => !part.startsWith('0 ')).join(' · ') || 'Untouched';
-        return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.daysSincePractice === undefined ? 'Untouched' : `${freshness.daysSincePractice}d ago`}</small></button></li>;
+        return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.sessionsSincePractice === undefined ? 'Untouched' : freshness.sessionsSincePractice === 0 ? 'Latest session' : `${freshness.sessionsSincePractice} session${freshness.sessionsSincePractice === 1 ? '' : 's'} ago`}</small></button></li>;
       })}</ul></section>
       <SessionHistory history={history} onSelect={setSelected} onEdit={setEditingSession} onRemove={removeHistory} onEraseAll={eraseAllProgress} onExport={downloadBackup} onImport={restoreBackup} />
     </section>
