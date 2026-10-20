@@ -13,6 +13,7 @@ import {
   outgoing,
   progressOf,
   readinessDepth,
+  sessionEntrySkills,
 } from './SkillGraph.ts';
 
 export type Freshness = 'fresh' | 'getting-stale' | 'stale';
@@ -63,9 +64,11 @@ const latestPractice = (
 ) => {
   const sessions = sessionsNewestFirst(profile);
   for (const [sessionsSincePractice, session] of sessions.entries()) {
-    const entries = session.entries.filter(entry =>
-      (!skill || entry.skill === skill)
-      && (!category || pack.skills.find(item => item.id === entry.skill)?.category === category));
+    const entries = session.entries.flatMap(entry =>
+      sessionEntrySkills(entry)
+        .filter(skillId => (!skill || skillId === skill)
+          && (!category || pack.skills.find(item => item.id === skillId)?.category === category))
+        .map(skillId => ({ skill: skillId, intensity: entry.intensity })));
     if (entries.length > 0) {
       const intensity = entries.reduce((strongest, entry) =>
         intensityRank[entry.intensity] > intensityRank[strongest] ? entry.intensity : strongest,
@@ -101,11 +104,10 @@ export const practiceQueue = (
     const unlocks = outgoing(pack, skill.id, 'requires').length;
     const supportingPractice = incoming(pack, skill.id, 'supports')
       .filter(relation => isSatisfied(profile, relation.from)).length;
-    const roleWeight = skill.role === 'core' ? 1 : .55;
-    const priority = roleWeight * (skill.importance * (skillDebt + categoryDebt * .45)
+    const priority = skill.importance * (skillDebt + categoryDebt * .45)
       + (learning ? 1 : 0)
       + unlocks * .2
-      + supportingPractice * .3);
+      + supportingPractice * .3;
     const reasons = [
       skill.importance === 3 ? 'core foundation' : undefined,
       skillPractice !== undefined && freshness(skillPractice) === 'stale' ? 'needs refreshing' : undefined,
@@ -151,8 +153,7 @@ export const missingRequirements = (pack: SkillPack, profile: SkillProfile, skil
     .filter((candidate): candidate is Skill => candidate !== undefined);
 
 export const readyToLearn = (pack: SkillPack, profile: SkillProfile) =>
-  practiceQueue(pack, profile).filter(item =>
-    item.skill.role === 'core' && progressOf(profile, item.skill.id) === 'not-started');
+  practiceQueue(pack, profile).filter(item => progressOf(profile, item.skill.id) === 'not-started');
 
 export const activeLearning = (pack: SkillPack, profile: SkillProfile) =>
   pack.skills.filter(skill =>
@@ -160,13 +161,11 @@ export const activeLearning = (pack: SkillPack, profile: SkillProfile) =>
 
 export const needsAttention = (pack: SkillPack, profile: SkillProfile) =>
   practiceQueue(pack, profile).filter(item =>
-    item.skill.role === 'core'
-      ? progressOf(profile, item.skill.id) === 'learning' || item.freshness !== 'fresh'
-      : progressOf(profile, item.skill.id) !== 'not-started');
+    progressOf(profile, item.skill.id) === 'learning' || item.freshness !== 'fresh');
 
 export type RecordedSession = Readonly<{
   session: CompletedSession;
-  entries: readonly Readonly<{ entry: SessionEntry; skill: Skill }>[];
+  entries: readonly Readonly<{ entry: SessionEntry; skills: readonly Skill[] }>[];
 }>;
 
 export const completedSessions = (pack: SkillPack, profile: SkillProfile): readonly RecordedSession[] =>
@@ -175,8 +174,10 @@ export const completedSessions = (pack: SkillPack, profile: SkillProfile): reado
     .map(session => ({
       session,
       entries: session.entries
-        .map(entry => ({ entry, skill: pack.skills.find(skill => skill.id === entry.skill) }))
-        .filter((item): item is { entry: SessionEntry; skill: Skill } => item.skill !== undefined),
+        .map(entry => ({ entry, skills: sessionEntrySkills(entry)
+          .map(skillId => pack.skills.find(skill => skill.id === skillId))
+          .filter((skill): skill is Skill => skill !== undefined) }))
+        .filter(item => item.skills.length > 0),
     }))
     .filter(session => session.entries.length > 0);
 

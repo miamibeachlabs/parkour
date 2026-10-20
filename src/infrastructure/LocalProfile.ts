@@ -5,6 +5,7 @@ import {
   type SessionApproach,
   type SessionEntry,
   type SkillProfile,
+  sessionEntrySkills,
 } from '../domain/SkillGraph.ts';
 
 const storageKey = 'parkour-profile-v1';
@@ -21,9 +22,18 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const sessionEntry = (value: unknown): SessionEntry | undefined =>
-  isRecord(value) && typeof value.skill === 'string' && isIntensity(value.intensity)
-    && (value.approach === undefined || isApproach(value.approach))
-    ? { skill: value.skill, intensity: value.intensity, ...(value.approach ? { approach: value.approach } : {}) }
+  isRecord(value) && isIntensity(value.intensity) && (value.approach === undefined || isApproach(value.approach))
+    ? value.kind === 'combo'
+      && typeof value.id === 'string'
+      && Array.isArray(value.skills)
+      && value.skills.length >= 2
+      && value.skills.every(skill => typeof skill === 'string')
+      && (value.label === undefined || typeof value.label === 'string')
+        ? { kind: 'combo', id: value.id, skills: value.skills, intensity: value.intensity, ...(value.approach ? { approach: value.approach } : {}), ...(value.label ? { label: value.label } : {}) }
+        : typeof value.skill === 'string'
+          && (value.kind === undefined || value.kind === 'skill')
+          ? { ...(value.kind === 'skill' ? { kind: 'skill' as const } : {}), skill: value.skill, intensity: value.intensity, ...(value.approach ? { approach: value.approach } : {}) }
+          : undefined
     : undefined;
 
 const completedSession = (value: unknown): CompletedSession | undefined => {
@@ -109,7 +119,7 @@ export const importProfile = (text: string, skillIds: readonly string[]): SkillP
     if (!profile) return undefined;
     const known = new Set(skillIds);
     const referencesKnownSkill = (skill: string) => known.has(skill);
-    const entriesAreKnown = (entries: readonly SessionEntry[]) => entries.every(entry => referencesKnownSkill(entry.skill));
+    const entriesAreKnown = (entries: readonly SessionEntry[]) => entries.every(entry => sessionEntrySkills(entry).every(referencesKnownSkill));
     return Object.keys(profile.states).every(referencesKnownSkill)
       && profile.sessions.every(session => entriesAreKnown(session.entries))
       && (!profile.openSession || entriesAreKnown(profile.openSession.entries))

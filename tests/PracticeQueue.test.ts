@@ -90,21 +90,21 @@ test('supporting practice improves recommendation priority without unlocking a s
   expect(precision?.reasons).toContain('supported by practice');
 });
 
-test('supporting movements stay out of the Parkour learning frontier until practiced', () => {
+test('movement practice belongs to the same ordinary skill map', () => {
   const profile: SkillProfile = { states: {}, sessions: [] };
   expect(activeLearning(parkour, profile).map(skill => skill.id)).not.toContain('ginga');
-  expect(needsAttention(parkour, profile).map(item => item.skill.id)).not.toContain('ginga');
-  expect(practiceQueue(parkour, profile).find(item => item.skill.id === 'ginga')?.skill.role).toBe('support');
+  expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ginga');
+  expect(practiceQueue(parkour, profile).find(item => item.skill.id === 'ginga')?.skill.category).toBe('ground');
 });
 
-test('practiced supporting movements remain visible without gating Parkour skills', () => {
+test('a combo records practice for its components without becoming a skill', () => {
   const profile: SkillProfile = {
     states: {},
-    sessions: [{ id: 'warmup', date: '2026-10-19', entries: [{ skill: 'ginga', intensity: 'medium' }] }],
+    sessions: [{ id: 'combo', date: '2026-10-19', entries: [{ kind: 'combo', id: 'monkey-roll', skills: ['monkey-walk', 'sideways-roll'], intensity: 'medium' }] }],
   };
-  expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('ginga');
-  expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ginga');
-  expect(isUnlocked(parkour, profile, 'kong-vault')).toBe(false);
+  expect(practiceEvents(profile).map(event => event.skill)).toEqual(['monkey-walk', 'sideways-roll']);
+  expect(activeLearning(parkour, profile).map(skill => skill.id)).toEqual(expect.arrayContaining(['monkey-walk', 'sideways-roll']));
+  expect(parkour.skills.map(skill => skill.id)).not.toContain('monkey-roll');
 });
 
 test('existing practice becomes a durable learning path until explicitly acquired', () => {

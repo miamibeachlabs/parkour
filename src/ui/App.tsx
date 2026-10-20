@@ -15,6 +15,8 @@ import {
   progressOf,
   removeCompletedSession,
   replaceCompletedSession,
+  sessionEntryId,
+  sessionEntrySkills,
 } from '../domain/SkillGraph.ts';
 import {
   activeLearning,
@@ -45,10 +47,8 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   const [editingSession, setEditingSession] = useState<CompletedSession | undefined>();
   useEffect(() => saveProfile(profile), [profile]);
 
-  const active = activeLearning(pack, profile).filter(skill => skill.role === 'core');
+  const active = activeLearning(pack, profile);
   const attention = needsAttention(pack, profile);
-  const coreAttention = attention.filter(item => item.skill.role === 'core');
-  const supportingPractice = attention.filter(item => item.skill.role === 'support');
   const attentionBySkill = new Map(attention.map(item => [item.skill.id, item]));
   const ready = readyToLearn(pack, profile).slice(0, 4);
   const stretch = skillsAtReadinessDepth(pack, profile, 1);
@@ -57,7 +57,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   const freshCategories = categoryFreshness(pack, profile);
   const selectedSkill = pack.skills.find(skill => skill.id === selected);
   const session = profile.openSession;
-  const inSession = (id: SkillId) => session?.entries.some(entry => entry.skill === id) ?? false;
+  const inSession = (id: SkillId) => session?.entries.some(entry => sessionEntrySkills(entry).includes(id)) ?? false;
 
   const addToSession = (skill: SkillId, approach: SessionApproach = 'ready') => {
     if (inSession(skill)) return;
@@ -65,29 +65,36 @@ export const App = ({ pack }: { pack: SkillPack }) => {
       ...current,
       openSession: {
         startedAt: current.openSession?.startedAt ?? new Date().toISOString(),
-        entries: [...(current.openSession?.entries ?? []), { skill, intensity: 'medium', approach }],
+        entries: [...(current.openSession?.entries ?? []), { kind: 'skill', skill, intensity: 'medium', approach }],
       },
     }));
   };
 
-  const setSessionIntensity = (skill: SkillId, intensity: PracticeIntensity) =>
+  const setSessionIntensity = (entryId: string, intensity: PracticeIntensity) =>
     setProfile(current => !current.openSession ? current : ({
-      ...current,
-      openSession: { ...current.openSession, entries: current.openSession.entries.map(entry => entry.skill === skill ? { ...entry, intensity } : entry) },
+      ...current, openSession: { ...current.openSession, entries: current.openSession.entries.map(entry => sessionEntryId(entry) === entryId ? { ...entry, intensity } : entry) },
     }));
 
-  const removeFromSession = (skill: SkillId) =>
+  const removeFromSession = (entryId: string) =>
     setProfile(current => !current.openSession ? current : ({
-      ...current,
-      openSession: { ...current.openSession, entries: current.openSession.entries.filter(entry => entry.skill !== skill) },
+      ...current, openSession: { ...current.openSession, entries: current.openSession.entries.filter(entry => sessionEntryId(entry) !== entryId) },
     }));
+
+  const addCombo = (skills: readonly SkillId[]) => setProfile(current => ({
+    ...current,
+    openSession: {
+      startedAt: current.openSession?.startedAt ?? new Date().toISOString(),
+      entries: [...(current.openSession?.entries ?? []), { kind: 'combo', id: crypto.randomUUID(), skills, intensity: 'medium' }],
+    },
+  }));
 
   const finishSession = () => setProfile(current => {
     const open = current.openSession;
     if (!open || open.entries.length === 0) return current;
     const states = { ...current.states };
     for (const entry of open.entries)
-      if (states[entry.skill] !== 'acquired') states[entry.skill] = 'learning';
+      for (const skill of sessionEntrySkills(entry))
+        if (states[skill] !== 'acquired') states[skill] = 'learning';
     return {
       states,
       sessions: [...current.sessions, { id: crypto.randomUUID(), date: today(), entries: open.entries }],
@@ -127,7 +134,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
       <div class="legend" aria-label="Practice freshness legend"><span class="unpracticed">Not practiced</span><span class="fresh">Fresh</span><span class="aging">Getting stale</span><span class="stale">Stale</span></div>
     </header>
 
-    <SessionPanel pack={pack} session={session} onSelect={setSelected} onIntensity={setSessionIntensity} onRemove={removeFromSession} onFinish={finishSession} />
+    <SessionPanel pack={pack} session={session} onSelect={setSelected} onIntensity={setSessionIntensity} onRemove={removeFromSession} onAddCombo={addCombo} onFinish={finishSession} />
 
     <section class="active-section" aria-labelledby="active-learning">
       <div class="section-heading"><div><p class="eyebrow">YOUR CURRICULUM</p><h2 id="active-learning">Currently learning</h2></div><p>Practicing a skill starts Learning. It stays here until you decide it has become Acquired.</p></div>
@@ -139,10 +146,8 @@ export const App = ({ pack }: { pack: SkillPack }) => {
 
     <section class="queue-section" aria-labelledby="needs-attention">
       <div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="needs-attention">Needs attention</h2></div><p>Skills you are learning stay actionable here, alongside stale practice, maintenance, and useful new starts.</p></div>
-      <div class="queue-list">{coreAttention.slice(0, 6).map((item, index) => <SkillRow key={item.skill.id} item={item} index={index + 1} inSession={inSession(item.skill.id)} onAdd={() => addToSession(item.skill.id)} onSelect={() => setSelected(item.skill.id)} />)}</div>
+      <div class="queue-list">{attention.slice(0, 6).map((item, index) => <SkillRow key={item.skill.id} item={item} index={index + 1} inSession={inSession(item.skill.id)} onAdd={() => addToSession(item.skill.id)} onSelect={() => setSelected(item.skill.id)} />)}</div>
     </section>
-
-    <SupportingMovement items={supportingPractice} inSession={inSession} onAdd={addToSession} onSelect={setSelected} />
 
     {stretch.length > 0 && <section class="stretch-section" aria-labelledby="stretch">
       <div class="section-heading"><div><p class="eyebrow">YOUR FRONTIER</p><h2 id="stretch">Stretch · one layer ahead</h2></div><p>The model suggests a foundation first. Add one anyway when the situation and your judgment make it useful.</p></div>
@@ -152,14 +157,14 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     <SkillCatalogue pack={pack} profile={profile} onSelect={setSelected} />
 
     <section class="split-sections">
-      <section class="surface" aria-labelledby="terrain"><p class="eyebrow">YOUR MAP</p><h2 id="terrain">Terrain traversed</h2><ul class="coverage-list">{pack.categories.filter(category => pack.skills.some(skill => skill.role === 'core' && skill.category === category.id)).map(category => {
-        const skills = pack.skills.filter(skill => skill.role === 'core' && skill.category === category.id);
+      <section class="surface" aria-labelledby="terrain"><p class="eyebrow">YOUR MAP</p><h2 id="terrain">Terrain traversed</h2><ul class="coverage-list">{pack.categories.map(category => {
+        const skills = pack.skills.filter(skill => skill.category === category.id);
         const counts = { learning: skills.filter(skill => progressOf(profile, skill.id) === 'learning').length, acquired: skills.filter(skill => progressOf(profile, skill.id) === 'acquired').length, available: skills.filter(skill => progressOf(profile, skill.id) === 'not-started' && isUnlocked(pack, profile, skill.id)).length, locked: skills.filter(skill => !isUnlocked(pack, profile, skill.id)).length };
         const freshness = freshCategories.find(item => item.category.id === category.id);
         const summary = [`${counts.learning} learning`, `${counts.acquired} acquired`, `${counts.available} available`, `${counts.locked} locked`].filter(part => !part.startsWith('0 ')).join(' · ') || 'Untouched';
         return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.sessionsSincePractice === undefined ? 'Untouched' : freshness.sessionsSincePractice === 0 ? 'Latest session' : `${freshness.sessionsSincePractice} session${freshness.sessionsSincePractice === 1 ? '' : 's'} ago`}</small></button></li>;
       })}</ul></section>
-      <SessionHistory history={history} onSelect={setSelected} onEdit={setEditingSession} onRemove={removeHistory} onEraseAll={eraseAllProgress} onExport={downloadBackup} onImport={restoreBackup} />
+      <SessionHistory pack={pack} history={history} onSelect={setSelected} onEdit={setEditingSession} onRemove={removeHistory} onEraseAll={eraseAllProgress} onExport={downloadBackup} onImport={restoreBackup} />
     </section>
 
     <section class="split-sections lower-split">
@@ -177,13 +182,9 @@ const LearningSkill = ({ item, inSession, onAdd, onSelect }: { item: QueueItem; 
 
 const SkillRow = ({ item, index, inSession, onAdd, onSelect }: { item: QueueItem; index: number; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class={`skill-row ${freshnessTone(item)}`}><span class="rank">{index}</span><button class="skill-summary" onClick={onSelect}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{freshnessLabel(item)} · {item.reasons.filter(reason => reason !== 'needs refreshing').slice(0, 2).join(' · ')}</span></small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
 
-const SupportingMovement = ({ items, inSession, onAdd, onSelect }: { items: readonly QueueItem[]; inSession: (skill: SkillId) => boolean; onAdd: (skill: SkillId) => void; onSelect: (skill: SkillId) => void }) => <section class="supporting-section" aria-labelledby="supporting-movement"><div class="section-heading"><div><p class="eyebrow">PARKOUR SUPPORT</p><h2 id="supporting-movement">Supporting movement</h2></div><p>Movements you use to warm up, explore, and build transferable capacity. They never gate your Parkour path.</p></div>{items.length ? <div class="supporting-list">{items.map(item => <article key={item.skill.id} class={`supporting-row ${freshnessTone(item)}`}><button class="skill-summary" onClick={() => onSelect(item.skill.id)}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{title(item.skill.origin)} · {freshnessLabel(item)}</span></small></button><button class={inSession(item.skill.id) ? 'in-session' : 'practice'} onClick={() => onAdd(item.skill.id)} disabled={inSession(item.skill.id)}>{inSession(item.skill.id) ? 'In session' : 'Add'}</button></article>)}</div> : <p class="empty-state">Nothing here yet. Add movements you actually use from the supporting library below; recorded practice will keep them in view.</p>}</section>;
-
 const StretchSkill = ({ skill, missing, inSession, onAdd, onSelect }: { skill: Skill; missing: readonly Skill[]; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class="stretch-skill"><button class="stretch-summary" onClick={onSelect}><strong>{skill.name}</strong><small>Suggested first: {missing.map(item => item.name).join(', ')}</small></button><button class={inSession ? 'in-session' : 'stretch-add'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add as stretch'}</button></article>;
 
-const SkillCatalogue = ({ pack, profile, onSelect }: { pack: SkillPack; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => <><Catalogue pack={pack} profile={profile} role="core" eyebrow="EXPLORE" heading="Parkour skills" description="Browse the core course map. Opening a skill shows what it needs, what it enables, and lets you make an intentional stretch choice." onSelect={onSelect} /><Catalogue pack={pack} profile={profile} role="support" eyebrow="MOVEMENT LIBRARY" heading="Supporting movement" description="Use movements from other disciplines when they help your Parkour practice. They remain visible once you begin using them, but never gate your main path." onSelect={onSelect} /></>;
-
-const Catalogue = ({ pack, profile, role, eyebrow, heading, description, onSelect }: { pack: SkillPack; profile: SkillProfile; role: Skill['role']; eyebrow: string; heading: string; description: string; onSelect: (skill: SkillId) => void }) => <section class="catalogue-section" aria-labelledby={`catalogue-${role}`}><div class="section-heading"><div><p class="eyebrow">{eyebrow}</p><h2 id={`catalogue-${role}`}>{heading}</h2></div><p>{description}</p></div><div class="catalogue-grid">{pack.categories.map(category => { const skills = pack.skills.filter(skill => skill.role === role && skill.category === category.id); return skills.length ? <section class="catalogue-category" key={category.id}><h3>{category.name}</h3><p>{category.description}</p><ul>{skills.map(skill => <li key={skill.id}><button onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{catalogueStatus(pack, profile, skill)}</small></button></li>)}</ul></section> : null; })}</div></section>;
+const SkillCatalogue = ({ pack, profile, onSelect }: { pack: SkillPack; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => <section class="catalogue-section" aria-labelledby="catalogue"><div class="section-heading"><div><p class="eyebrow">EXPLORE</p><h2 id="catalogue">Practice map</h2></div><p>Browse every movement you practice. Details show its functions, relationships, and how it fits into your own path.</p></div><div class="catalogue-grid">{pack.categories.map(category => { const skills = pack.skills.filter(skill => skill.category === category.id); return <section class="catalogue-category" key={category.id}><h3>{category.name}</h3><p>{category.description}</p><ul>{skills.map(skill => <li key={skill.id}><button onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{catalogueStatus(pack, profile, skill)}</small></button></li>)}</ul></section>; })}</div></section>;
 
 const catalogueStatus = (pack: SkillPack, profile: SkillProfile, skill: Skill) => {
   const progress = progressOf(profile, skill.id);
@@ -199,7 +200,7 @@ const SkillDetail = ({ pack, skill, profile, inSession, onClose, onSelect, onAdd
   const unlocked = isUnlocked(pack, profile, skill.id);
   const state = progressOf(profile, skill.id);
   return <div class="overlay" role="presentation" onClick={onClose}><aside class="detail" role="dialog" aria-modal="true" aria-label={`${skill.name} details`} onClick={event => event.stopPropagation()}>
-    <button class="close" onClick={onClose} aria-label="Close details">×</button><p class="eyebrow">{skill.role === 'core' ? pack.categories.find(category => category.id === skill.category)?.name.toUpperCase() : `SUPPORTING MOVEMENT · ${skill.origin.toUpperCase()}`}</p><h2>{skill.name}</h2><p class="description">{skill.description}</p>
+    <button class="close" onClick={onClose} aria-label="Close details">×</button><p class="eyebrow">{pack.categories.find(category => category.id === skill.category)?.name.toUpperCase()} · {skill.origin.toUpperCase()}</p><h2>{skill.name}</h2><p class="description">{skill.description}</p>
     {skill.functions.length > 0 && <div class="function-tags" aria-label="Movement functions">{skill.functions.map(functionName => <span key={functionName}>{title(functionName)}</span>)}</div>}
     {skill.tutorialUrl && <a class="tutorial" href={skill.tutorialUrl} target="_blank" rel="noreferrer">Open tutorial ↗</a>}{!unlocked && <p class="model-note">The model suggests building the listed requirements first. You can still add this as a Stretch; completed practice establishes your own frontier.</p>}
     <Relationship title="Requires" skills={sources('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Supported by" skills={sources('supports')} profile={profile} onSelect={onSelect} /><Relationship title="Enables" skills={targets('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Supports" skills={targets('supports')} profile={profile} onSelect={onSelect} />
@@ -209,26 +210,39 @@ const SkillDetail = ({ pack, skill, profile, inSession, onClose, onSelect, onAdd
 
 const Relationship = ({ title, skills, profile, onSelect }: { title: string; skills: readonly Skill[]; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => skills.length ? <section class="relationship"><h3>{title}</h3><ul>{skills.map(skill => <li key={skill.id}><span>{progressOf(profile, skill.id) === 'acquired' ? '✓' : '○'}</span><button onClick={() => onSelect(skill.id)}>{skill.name}</button></li>)}</ul></section> : null;
 
-const SessionPanel = ({ pack, session, onSelect, onIntensity, onRemove, onFinish }: { pack: SkillPack; session: SkillProfile['openSession']; onSelect: (skill: SkillId) => void; onIntensity: (skill: SkillId, intensity: PracticeIntensity) => void; onRemove: (skill: SkillId) => void; onFinish: () => void }) => session ? <section class="session-panel" aria-labelledby="today-session"><div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="today-session">Today’s session</h2></div><p>{session.entries.length} skill{session.entries.length === 1 ? '' : 's'} selected. Add skills as your training unfolds; finish only when they become history.</p></div><div class="session-entries">{session.entries.map(entry => { const skill = pack.skills.find(item => item.id === entry.skill); return skill ? <article key={entry.skill} class="session-entry"><button class="session-skill" onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{entry.approach === 'stretch' ? 'Stretch · ' : ''}{pack.categories.find(category => category.id === skill.category)?.name}</small></button><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => onIntensity(skill.id, intensity)}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => onRemove(skill.id)} aria-label={`Remove ${skill.name} from today’s session`}>×</button></article> : null; })}</div><button class="finish-session" onClick={onFinish}>Finish session · save {session.entries.length} skill{session.entries.length === 1 ? '' : 's'}</button></section> : <section class="session-empty"><p class="eyebrow">TODAY’S SESSION</p><p>Add skills as you decide to work on them. They become practice history only when you finish the session.</p></section>;
+const sessionEntryName = (pack: SkillPack, entry: SkillProfile['sessions'][number]['entries'][number]) =>
+  entry.kind === 'combo'
+    ? entry.label ?? sessionEntrySkills(entry).map(id => pack.skills.find(skill => skill.id === id)?.name ?? id).join(' → ')
+    : pack.skills.find(skill => skill.id === entry.skill)?.name ?? entry.skill;
 
-const SessionHistory = ({ history, onSelect, onEdit, onRemove, onEraseAll, onExport, onImport }: { history: ReturnType<typeof completedSessions>; onSelect: (skill: SkillId) => void; onEdit: (session: CompletedSession) => void; onRemove: (sessionId: string) => void; onEraseAll: () => void; onExport: () => void; onImport: (file: File) => void }) => {
+const SessionPanel = ({ pack, session, onSelect, onIntensity, onRemove, onAddCombo, onFinish }: { pack: SkillPack; session: SkillProfile['openSession']; onSelect: (skill: SkillId) => void; onIntensity: (entryId: string, intensity: PracticeIntensity) => void; onRemove: (entryId: string) => void; onAddCombo: (skills: readonly SkillId[]) => void; onFinish: () => void }) => <section class={session ? 'session-panel' : 'session-empty'} aria-labelledby="today-session"><div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="today-session">Today’s session</h2></div><p>{session ? `${session.entries.length} practice item${session.entries.length === 1 ? '' : 's'} selected. Finish only when they become history.` : 'Add skills as training unfolds, or combine skills into an on-the-fly sequence.'}</p></div>{session && <div class="session-entries">{session.entries.map(entry => <article key={sessionEntryId(entry)} class="session-entry"><button class="session-skill" onClick={() => onSelect(sessionEntrySkills(entry)[0])}><strong>{sessionEntryName(pack, entry)}</strong><small>{entry.kind === 'combo' ? `Combo · ${sessionEntrySkills(entry).length} skills` : entry.approach === 'stretch' ? 'Stretch skill' : 'Skill'}</small></button><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => onIntensity(sessionEntryId(entry), intensity)}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => onRemove(sessionEntryId(entry))} aria-label={`Remove ${sessionEntryName(pack, entry)} from today’s session`}>×</button></article>)}</div>}<ComboBuilder pack={pack} onAdd={onAddCombo} />{session && <button class="finish-session" onClick={onFinish}>Finish session · save {session.entries.length} practice item{session.entries.length === 1 ? '' : 's'}</button>}</section>;
+
+const ComboBuilder = ({ pack, onAdd }: { pack: SkillPack; onAdd: (skills: readonly SkillId[]) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [skills, setSkills] = useState<SkillId[]>([]);
+  const choose = (event: Event) => setSkills(Array.from((event.currentTarget as HTMLSelectElement).selectedOptions, option => option.value));
+  const add = () => { if (skills.length < 2) return; onAdd(skills); setSkills([]); setOpen(false); };
+  return open ? <div class="combo-builder"><label>Combine skills<select multiple size={5} onChange={choose}>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label><p>Choose two or more skills. Their listed order becomes the sequence, and each receives the recorded practice.</p><div><button onClick={add} disabled={skills.length < 2}>Add combo</button><button onClick={() => setOpen(false)}>Cancel</button></div></div> : <button class="add-combo" onClick={() => setOpen(true)}>Combine skills</button>;
+};
+
+const SessionHistory = ({ pack, history, onSelect, onEdit, onRemove, onEraseAll, onExport, onImport }: { pack: SkillPack; history: ReturnType<typeof completedSessions>; onSelect: (skill: SkillId) => void; onEdit: (session: CompletedSession) => void; onRemove: (sessionId: string) => void; onEraseAll: () => void; onExport: () => void; onImport: (file: File) => void }) => {
   const importInput = useRef<HTMLInputElement>(null);
-  return <section class="surface history" aria-labelledby="history"><div class="history-heading"><div><p class="eyebrow">EVIDENCE</p><h2 id="history">Practice history</h2></div>{history.length ? <button class="erase-progress" onClick={onEraseAll}>Erase all local progress</button> : null}</div><div class="backup-actions"><button onClick={onExport}>Export backup</button><button onClick={() => importInput.current?.click()}>Restore backup</button><input ref={importInput} type="file" accept="application/json,.json" onChange={event => { const file = event.currentTarget.files?.[0]; if (file) void onImport(file); event.currentTarget.value = ''; }} /></div>{history.length ? <><p class="history-note">Sessions are your editable trail. Correct the date, skills, or intensity when you remember a workout later. A backup lets you move this trail to another install.</p><div class="history-list">{history.map(({ session, entries }) => <article class="history-session" key={session.id}><header><strong>{displayDate(session.date)}</strong><small>{entries.length} skill{entries.length === 1 ? '' : 's'}</small><span class="history-buttons"><button class="edit-history" onClick={() => onEdit(session)}>Edit</button><button class="remove-history" onClick={() => onRemove(session.id)}>Remove</button></span></header><ul>{entries.map(({ entry, skill }) => <li key={skill.id}><button onClick={() => onSelect(skill.id)}>{skill.name}</button><small>{title(entry.intensity)}{entry.approach === 'stretch' ? ' · Stretch' : ''}</small></li>)}</ul></article>)}</div></> : <p class="empty-state">Finished training sessions will appear here, with their individual skills and intensity.</p>}</section>;
+  return <section class="surface history" aria-labelledby="history"><div class="history-heading"><div><p class="eyebrow">EVIDENCE</p><h2 id="history">Practice history</h2></div>{history.length ? <button class="erase-progress" onClick={onEraseAll}>Erase all local progress</button> : null}</div><div class="backup-actions"><button onClick={onExport}>Export backup</button><button onClick={() => importInput.current?.click()}>Restore backup</button><input ref={importInput} type="file" accept="application/json,.json" onChange={event => { const file = event.currentTarget.files?.[0]; if (file) void onImport(file); event.currentTarget.value = ''; }} /></div>{history.length ? <><p class="history-note">Sessions are your editable trail. Correct the date, skills, combinations, or intensity when you remember a workout later.</p><div class="history-list">{history.map(({ session, entries }) => <article class="history-session" key={session.id}><header><strong>{displayDate(session.date)}</strong><small>{entries.length} practice item{entries.length === 1 ? '' : 's'}</small><span class="history-buttons"><button class="edit-history" onClick={() => onEdit(session)}>Edit</button><button class="remove-history" onClick={() => onRemove(session.id)}>Remove</button></span></header><ul>{entries.map(({ entry, skills }) => <li key={sessionEntryId(entry)}><button onClick={() => onSelect(skills[0].id)}>{sessionEntryName(pack, entry)}</button><small>{title(entry.intensity)}{entry.kind === 'combo' ? ' · Combo' : entry.approach === 'stretch' ? ' · Stretch' : ''}</small></li>)}</ul></article>)}</div></> : <p class="empty-state">Finished training sessions will appear here, with their individual skills and intensity.</p>}</section>;
 };
 
 const SessionEditor = ({ pack, session, onClose, onSave }: { pack: SkillPack; session: CompletedSession; onClose: () => void; onSave: (session: CompletedSession) => void }) => {
   const [draft, setDraft] = useState(session);
-  const updateEntry = (skill: SkillId, update: (entry: typeof draft.entries[number]) => typeof draft.entries[number]) =>
-    setDraft(current => ({ ...current, entries: current.entries.map(entry => entry.skill === skill ? update(entry) : entry) }));
-  const removeEntry = (skill: SkillId) =>
-    setDraft(current => ({ ...current, entries: current.entries.filter(entry => entry.skill !== skill) }));
+  const updateEntry = (entryId: string, update: (entry: typeof draft.entries[number]) => typeof draft.entries[number]) =>
+    setDraft(current => ({ ...current, entries: current.entries.map(entry => sessionEntryId(entry) === entryId ? update(entry) : entry) }));
+  const removeEntry = (entryId: string) =>
+    setDraft(current => ({ ...current, entries: current.entries.filter(entry => sessionEntryId(entry) !== entryId) }));
   const addEntry = (skill: SkillId) =>
-    setDraft(current => current.entries.some(entry => entry.skill === skill) ? current : ({ ...current, entries: [...current.entries, { skill, intensity: 'medium', approach: 'ready' }] }));
+    setDraft(current => current.entries.some(entry => sessionEntrySkills(entry).includes(skill)) ? current : ({ ...current, entries: [...current.entries, { kind: 'skill', skill, intensity: 'medium', approach: 'ready' }] }));
   return <div class="overlay" role="presentation" onClick={onClose}><aside class="detail session-editor" role="dialog" aria-modal="true" aria-label="Edit practice session" onClick={event => event.stopPropagation()}>
     <button class="close" onClick={onClose} aria-label="Close editor">×</button><p class="eyebrow">PRACTICE HISTORY</p><h2>Edit workout</h2><p class="description">Correct when it happened, what you practiced, and how hard it felt.</p>
     <label class="date-field">Date<input type="date" value={draft.date} onInput={event => setDraft(current => ({ ...current, date: event.currentTarget.value }))} /></label>
-    <div class="editor-entries">{draft.entries.map(entry => { const skill = pack.skills.find(item => item.id === entry.skill); return skill ? <article key={entry.skill} class="session-entry"><strong>{skill.name}</strong><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => updateEntry(entry.skill, current => ({ ...current, intensity }))}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => removeEntry(entry.skill)} aria-label={`Remove ${skill.name} from this workout`}>×</button></article> : null; })}</div>
-    <label class="add-skill">Add another skill<select value="" onChange={event => addEntry(event.currentTarget.value)}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !draft.entries.some(entry => entry.skill === skill.id)).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label>
+    <div class="editor-entries">{draft.entries.map(entry => <article key={sessionEntryId(entry)} class="session-entry"><strong>{sessionEntryName(pack, entry)}</strong><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => updateEntry(sessionEntryId(entry), current => ({ ...current, intensity }))}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => removeEntry(sessionEntryId(entry))} aria-label={`Remove ${sessionEntryName(pack, entry)} from this workout`}>×</button></article>)}</div>
+    <label class="add-skill">Add another skill<select value="" onChange={event => addEntry(event.currentTarget.value)}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !draft.entries.some(entry => sessionEntrySkills(entry).includes(skill.id))).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label>
     <button class="finish-session" onClick={() => onSave(draft)} disabled={!draft.date || draft.entries.length === 0}>Save workout</button>
   </aside></div>;
 };

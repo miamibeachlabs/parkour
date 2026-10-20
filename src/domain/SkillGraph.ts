@@ -5,7 +5,6 @@ export type SkillState = 'learning' | 'acquired';
 export type SkillProgress = 'not-started' | SkillState;
 export type PracticeIntensity = 'light' | 'medium' | 'intensive';
 export type SessionApproach = 'ready' | 'stretch';
-export type SkillRole = 'core' | 'support';
 
 export type Category = Readonly<{
   id: CategoryId;
@@ -19,7 +18,6 @@ export type Skill = Readonly<{
   description: string;
   category: CategoryId;
   importance: 1 | 2 | 3;
-  role: SkillRole;
   origin: string;
   functions: readonly string[];
   tutorialUrl?: string;
@@ -45,11 +43,23 @@ export type PracticeEvent = Readonly<{
   intensity: PracticeIntensity;
 }>;
 
-export type SessionEntry = Readonly<{
+export type SkillSessionEntry = Readonly<{
+  kind?: 'skill';
   skill: SkillId;
   intensity: PracticeIntensity;
   approach?: SessionApproach;
 }>;
+
+export type ComboSessionEntry = Readonly<{
+  kind: 'combo';
+  id: string;
+  skills: readonly SkillId[];
+  intensity: PracticeIntensity;
+  approach?: SessionApproach;
+  label?: string;
+}>;
+
+export type SessionEntry = SkillSessionEntry | ComboSessionEntry;
 
 export type CompletedSession = Readonly<{
   id: string;
@@ -86,7 +96,14 @@ export const replaceCompletedSession = (
 
 export const practiceEvents = (profile: SkillProfile): readonly PracticeEvent[] =>
   profile.sessions.flatMap(session =>
-    session.entries.map(entry => ({ ...entry, date: session.date })));
+    session.entries.flatMap(entry =>
+      sessionEntrySkills(entry).map(skill => ({ skill, intensity: entry.intensity, date: session.date }))));
+
+export const sessionEntrySkills = (entry: SessionEntry): readonly SkillId[] =>
+  entry.kind === 'combo' ? entry.skills : [entry.skill];
+
+export const sessionEntryId = (entry: SessionEntry) =>
+  entry.kind === 'combo' ? entry.id : entry.skill;
 
 export const incoming = (
   pack: SkillPack,

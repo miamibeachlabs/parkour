@@ -3,23 +3,26 @@ name: Parkour
 
 categories:
   - id: impact
-    name: Impact safety
+    name: Impact and landing
     description: Landing and rolling patterns that make later movement safer.
   - id: ground
-    name: Ground movement
-    description: Low body-control patterns for moving through and around space.
+    name: Ground movement and transitions
+    description: Locomotion, low positions, and supported transitions through the ground.
   - id: vaults
-    name: Vaults
+    name: Obstacle transit
     description: Controlled ways to pass obstacles.
   - id: jumping
     name: Jumping and landing
     description: Distance, precision, rebound, and movement through space.
-  - id: walls
-    name: Wall skills
-    description: Using a wall to redirect or gain height.
+  - id: vertical
+    name: Vertical movement and hanging
+    description: Using walls and bars to redirect, gain height, or support bodyweight.
   - id: rotation
-    name: Rotational movement
-    description: Controlled turning and spatial orientation through movement.
+    name: Rotation, inversion, and kicking
+    description: Controlled turning, inversion, and spatial orientation through movement.
+  - id: capacity
+    name: Mobility and general capacity
+    description: Strength, range, and conditioning that make the rest of practice available.
 
 skills:
   - id: animal-landing
@@ -114,14 +117,13 @@ skills:
     tutorial: https://www.youtube.com/watch?v=IAnd7gSgHGg
   - id: wall-run
     name: Wall run
-    category: walls
+    category: vertical
     importance: optional
     description: Use a purposeful foot contact to gain height or redirect movement.
     tutorial: https://www.youtube.com/watch?v=cnijAVbly84
   - id: ginga
     name: Ginga
     category: ground
-    role: support
     origin: capoeira
     functions: [locomotion, rhythm, coordination]
     importance: useful
@@ -129,7 +131,6 @@ skills:
   - id: negativa
     name: Negativa
     category: ground
-    role: support
     origin: capoeira
     functions: [ground-transitions, unilateral-support, hip-mobility]
     importance: useful
@@ -137,7 +138,6 @@ skills:
   - id: role
     name: Rolê
     category: ground
-    role: support
     origin: capoeira
     functions: [ground-transitions, coordination, spatial-awareness]
     importance: useful
@@ -145,7 +145,6 @@ skills:
   - id: meia-lua-de-frente
     name: Meia-lua de frente
     category: rotation
-    role: support
     origin: capoeira
     functions: [rotation, balance, coordination]
     importance: optional
@@ -153,7 +152,6 @@ skills:
   - id: queixada
     name: Queixada
     category: rotation
-    role: support
     origin: capoeira
     functions: [rotation, balance, coordination]
     importance: optional
@@ -161,7 +159,6 @@ skills:
   - id: armada
     name: Armada
     category: rotation
-    role: support
     origin: capoeira
     functions: [rotation, spatial-awareness, balance]
     importance: optional
@@ -169,7 +166,6 @@ skills:
   - id: pogos
     name: Pogos
     category: jumping
-    role: support
     origin: calisthenics
     functions: [elasticity, ankle-strength, reactive-landing]
     importance: useful
@@ -177,8 +173,91 @@ skills:
   - id: skipping-drills
     name: Skipping drills
     category: jumping
-    role: support
     origin: calisthenics
     functions: [elasticity, coordination, rhythm]
     importance: useful
     description: Light skipping and B-skip patterns for rhythm, coordination, and springy running mechanics.
+  - id: bear-walk
+    name: Bear walk
+    category: ground
+    origin: animal-flow
+    functions: [locomotion, shoulder-support, coordination]
+    importance: useful
+    description: Four-point locomotion with hands and feet moving beneath a stable trunk.
+  - id: crab-walk
+    name: Crab walk
+    category: ground
+    origin: animal-flow
+    functions: [locomotion, posterior-support, coordination]
+    importance: useful
+    description: Reverse-facing ground locomotion that develops shoulder support and spatial awareness.
+  - id: lizard-walk
+    name: Lizard walk
+    category: ground
+    origin: animal-flow
+    functions: [locomotion, shoulder-support, hip-mobility]
+    importance: optional
+    description: Low crawling locomotion that asks for coordinated shoulder support and hip movement.
+  - id: bear-crab-transition
+    name: Bear–crab transition
+    category: ground
+    origin: personal-practice
+    functions: [ground-transitions, rotation, coordination]
+    importance: useful
+    description: Rotate between bear and crab positions while maintaining deliberate hand and foot support.
+  - id: bear-wheel-transition
+    name: Bear–wheel transition
+    category: ground
+    origin: personal-practice
+    functions: [ground-transitions, inversion, shoulder-mobility]
+    importance: optional
+    description: Move between a bear position and a controlled wheel or backbend shape.
+  - id: bar-hang
+    name: Bar hang
+    category: vertical
+    origin: calisthenics
+    functions: [grip, shoulder-support, hanging]
+    importance: useful
+    description: A relaxed or active hang for grip, shoulder comfort, and vertical body support.
+  - id: cartwheel-au
+    name: Cartwheel / au
+    category: rotation
+    origin: capoeira
+    functions: [inversion, lateral-movement, spatial-awareness]
+    importance: useful
+    description: A controlled sideways inversion that returns smoothly to standing.
+  - id: low-au
+    name: Low au
+    category: rotation
+    origin: capoeira
+    functions: [inversion, ground-transitions, lateral-movement]
+    importance: optional
+    description: A low, compact cartwheel variation with close-to-ground feet.
+  - id: meia-lua-de-compasso
+    name: Meia-lua de compasso
+    category: rotation
+    origin: capoeira
+    functions: [rotation, balance, hip-mobility]
+    importance: optional
+    description: A turning, hands-supported kicking pattern that combines hinge, rotation, and reorientation.
+  - id: lunges
+    name: Lunges
+    category: capacity
+    origin: general-training
+    functions: [leg-strength, hip-mobility, balance]
+    importance: useful
+    description: Controlled stepping lunges for single-leg strength, hip range, and balance.
+  - id: walking-front-kicks
+    name: Walking front kicks
+    category: capacity
+    origin: mobility
+    functions: [hamstring-mobility, hip-mobility, balance]
+    importance: optional
+    description: Slow walking front kicks used as dynamic leg mobility and balance practice.
+  - id: bag-work
+    name: Bag work
+    category: capacity
+    origin: striking
+    functions: [conditioning, coordination, kicking]
+    importance: optional
+    description: Controlled striking or kicking rounds for conditioning and coordinated force production.

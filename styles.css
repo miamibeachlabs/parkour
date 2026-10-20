@@ -24,7 +24,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .getting-stale, .aging { background: #faebc9; color: #916419; }
 .stale { background: #f7d8d0; color: #a34c3c; }
 
-.active-section, .queue-section, .supporting-section, .catalogue-section { margin-top: 46px; }
+.active-section, .queue-section, .catalogue-section { margin-top: 46px; }
 .stretch-section { margin-top: 32px; }
 .stretch-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 12px; margin-top: 16px; }
 .stretch-skill { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 14px; background: #fff8e9; border-top: 2px solid #d28a27; border-bottom: 1px solid #ead4aa; }
@@ -38,6 +38,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .intensity-picker { display: flex; overflow: hidden; border: 1px solid #b9cac5; border-radius: 6px; }.intensity-picker button { min-height: 34px; padding: 5px 9px; background: white; border: 0; border-right: 1px solid #b9cac5; font-size: .74rem; }.intensity-picker button:last-child { border-right: 0; }.intensity-picker button.selected { color: white; background: var(--turquoise); }
 .remove-session { width: 34px; height: 34px; padding: 0; color: var(--muted); background: none; border: 0; font-size: 1.35rem; }.remove-session:hover { color: var(--coral); }
 .finish-session { min-height: 42px; margin-top: 14px; padding: 9px 13px; color: white; background: var(--turquoise); border: 1px solid var(--turquoise); border-radius: 7px; font-size: .84rem; font-weight: 700; }.finish-session:hover { background: var(--ocean); }
+.add-combo { min-height: 36px; margin-top: 14px; padding: 7px 10px; color: var(--ocean); background: white; border: 1px solid #b9cac5; border-radius: 6px; font-size: .78rem; font-weight: 700; }.add-combo:hover { background: #edf7f2; }
+.combo-builder { margin-top: 14px; padding: 14px; background: #f7f1e5; border: 1px solid var(--line); border-radius: 7px; }.combo-builder label { display: grid; gap: 6px; color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }.combo-builder select { padding: 7px; color: var(--ink); background: white; border: 1px solid #b9cac5; border-radius: 6px; font: inherit; }.combo-builder p { margin: 8px 0; color: var(--muted); font-size: .77rem; line-height: 1.4; }.combo-builder div { display: flex; gap: 8px; }.combo-builder button { min-height: 34px; padding: 6px 9px; color: var(--ocean); background: white; border: 1px solid #b9cac5; border-radius: 6px; font-size: .76rem; font-weight: 700; }.combo-builder button:disabled { color: #8b9895; background: #e7e8e4; cursor: not-allowed; }
 .section-heading { align-items: end; }
 .section-heading h2, .surface h2, .detail h2 { margin: 0; font-size: 1.4rem; letter-spacing: -.035em; }
 .section-heading > p { max-width: 360px; margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.45; }
@@ -54,9 +56,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid #67c9bd; outline-offs
 .queue-list { margin-top: 16px; background: var(--surface); border-top: 2px solid var(--ink); }
 .skill-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; min-height: 79px; border-bottom: 1px solid var(--line); border-left: 4px solid transparent; }
 .skill-row.unpracticed { border-left-color: #b8c4c1; background: #fafbf9; }.skill-row.fresh { border-left-color: #8ec8b7; background: #f6fcf9; }.skill-row.getting-stale { border-left-color: #e4b758; background: #fffaf0; }.skill-row.stale { border-left-color: #e89b8a; background: #fff7f4; }
-.supporting-list { margin-top: 16px; background: var(--surface); border-top: 2px solid #9a7a55; }
-.supporting-row { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 72px; border-bottom: 1px solid var(--line); border-left: 4px solid transparent; }
-.supporting-row.unpracticed { border-left-color: #b8c4c1; background: #fafbf9; }.supporting-row.fresh { border-left-color: #8ec8b7; background: #f6fcf9; }.supporting-row.getting-stale { border-left-color: #e4b758; background: #fffaf0; }.supporting-row.stale { border-left-color: #e89b8a; background: #fff7f4; }
 .rank { color: var(--muted); font-size: .82rem; text-align: center; }
 .skill-summary { min-width: 0; padding: 12px 10px; text-align: left; background: none; border: 0; }
 .skill-summary strong, .skill-summary small { display: block; }
