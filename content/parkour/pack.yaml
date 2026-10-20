@@ -198,20 +198,6 @@ skills:
     functions: [locomotion, shoulder-support, hip-mobility]
     importance: optional
     description: Low crawling locomotion that asks for coordinated shoulder support and hip movement.
-  - id: bear-crab-transition
-    name: Bear–crab transition
-    category: ground
-    origin: personal-practice
-    functions: [ground-transitions, rotation, coordination]
-    importance: useful
-    description: Rotate between bear and crab positions while maintaining deliberate hand and foot support.
-  - id: bear-wheel-transition
-    name: Bear–wheel transition
-    category: ground
-    origin: personal-practice
-    functions: [ground-transitions, inversion, shoulder-mobility]
-    importance: optional
-    description: Move between a bear position and a controlled wheel or backbend shape.
   - id: bar-hang
     name: Bar hang
     category: vertical
@@ -226,6 +212,13 @@ skills:
     functions: [inversion, lateral-movement, spatial-awareness]
     importance: useful
     description: A controlled sideways inversion that returns smoothly to standing.
+  - id: wheel-backbend
+    name: Wheel / backbend
+    category: rotation
+    origin: mobility
+    functions: [inversion, shoulder-mobility, spinal-extension]
+    importance: optional
+    description: A controlled bridge or wheel shape used for inversion, shoulder range, and spinal extension.
   - id: low-au
     name: Low au
     category: rotation

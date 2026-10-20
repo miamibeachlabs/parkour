@@ -220,9 +220,16 @@ const SessionPanel = ({ pack, session, onSelect, onIntensity, onRemove, onAddCom
 const ComboBuilder = ({ pack, onAdd }: { pack: SkillPack; onAdd: (skills: readonly SkillId[]) => void }) => {
   const [open, setOpen] = useState(false);
   const [skills, setSkills] = useState<SkillId[]>([]);
-  const choose = (event: Event) => setSkills(Array.from((event.currentTarget as HTMLSelectElement).selectedOptions, option => option.value));
+  const choose = (event: Event) => {
+    const select = event.currentTarget as HTMLSelectElement | null;
+    if (!select) return;
+    const skill = select.value;
+    if (skill && !skills.includes(skill)) setSkills(current => [...current, skill]);
+    select.value = '';
+  };
   const add = () => { if (skills.length < 2) return; onAdd(skills); setSkills([]); setOpen(false); };
-  return open ? <div class="combo-builder"><label>Combine skills<select multiple size={5} onChange={choose}>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label><p>Choose two or more skills. Their listed order becomes the sequence, and each receives the recorded practice.</p><div><button onClick={add} disabled={skills.length < 2}>Add combo</button><button onClick={() => setOpen(false)}>Cancel</button></div></div> : <button class="add-combo" onClick={() => setOpen(true)}>Combine skills</button>;
+  const name = (skill: SkillId) => pack.skills.find(item => item.id === skill)?.name ?? skill;
+  return open ? <div class="combo-builder"><label>Add the next skill<select value="" onChange={choose}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !skills.includes(skill.id)).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label>{skills.length ? <ol>{skills.map(skill => <li key={skill}><span>{name(skill)}</span><button onClick={() => setSkills(current => current.filter(item => item !== skill))} aria-label={`Remove ${name(skill)} from combo`}>×</button></li>)}</ol> : <p>Add skills in the order you want to practice them.</p>}<div><button onClick={add} disabled={skills.length < 2}>Add combo</button><button onClick={() => setOpen(false)}>Cancel</button></div></div> : <button class="add-combo" onClick={() => setOpen(true)}>Combine skills</button>;
 };
 
 const SessionHistory = ({ pack, history, onSelect, onEdit, onRemove, onEraseAll, onExport, onImport }: { pack: SkillPack; history: ReturnType<typeof completedSessions>; onSelect: (skill: SkillId) => void; onEdit: (session: CompletedSession) => void; onRemove: (sessionId: string) => void; onEraseAll: () => void; onExport: () => void; onImport: (file: File) => void }) => {

@@ -51,12 +51,3 @@ standing-jump:
 low-au:
   supports:
     - cartwheel-au
-
-bear-crab-transition:
-  supports:
-    - bear-walk
-    - crab-walk
-
-bear-wheel-transition:
-  supports:
-    - bear-walk
