@@ -5,17 +5,19 @@ ground-kong:
 kong-vault:
   requires:
     - ground-kong
-  helps:
+  supports:
     - safety-vault
 
 plyometric-jumps:
   requires:
     - standing-jump
+  supports:
+    - pogos
 
 running-jump:
   requires:
     - standing-jump
-  helps:
+  supports:
     - precision-landing
 
 strides:
@@ -23,17 +25,29 @@ strides:
     - running-jump
 
 precision-landing:
-  helps:
+  supports:
     - animal-landing
 
 shoulder-roll:
-  helps:
+  supports:
     - sideways-roll
 
 quadrupedal-movement:
-  helps:
+  supports:
     - monkey-walk
+    - negativa
+    - role
 
 wall-run:
-  helps:
+  supports:
     - precision-landing
+    - bar-hang
+
+standing-jump:
+  supports:
+    - pogos
+    - skipping-drills
+
+cartwheel-au:
+  supports:
+    - low-au

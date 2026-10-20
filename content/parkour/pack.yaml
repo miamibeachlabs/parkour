@@ -3,20 +3,26 @@ name: Parkour
 
 categories:
   - id: impact
-    name: Impact safety
+    name: Impact and landing
     description: Landing and rolling patterns that make later movement safer.
   - id: ground
-    name: Ground movement
-    description: Low body-control patterns for moving through and around space.
+    name: Ground movement and transitions
+    description: Locomotion, low positions, and supported transitions through the ground.
   - id: vaults
-    name: Vaults
+    name: Obstacle transit
     description: Controlled ways to pass obstacles.
   - id: jumping
     name: Jumping and landing
     description: Distance, precision, rebound, and movement through space.
-  - id: walls
-    name: Wall skills
-    description: Using a wall to redirect or gain height.
+  - id: vertical
+    name: Vertical movement and hanging
+    description: Using walls and bars to redirect, gain height, or support bodyweight.
+  - id: rotation
+    name: Rotation, inversion, and kicking
+    description: Controlled turning, inversion, and spatial orientation through movement.
+  - id: capacity
+    name: Mobility and general capacity
+    description: Strength, range, and conditioning that make the rest of practice available.
 
 skills:
   - id: animal-landing
@@ -111,7 +117,159 @@ skills:
     tutorial: https://www.youtube.com/watch?v=IAnd7gSgHGg
   - id: wall-run
     name: Wall run
-    category: walls
+    category: vertical
     importance: optional
     description: Use a purposeful foot contact to gain height or redirect movement.
     tutorial: https://www.youtube.com/watch?v=cnijAVbly84
+  - id: ginga
+    name: Ginga
+    category: ground
+    origin: capoeira
+    functions: [locomotion, rhythm, coordination]
+    importance: useful
+    description: A relaxed, shifting base that builds rhythm, coordination, and transitions between positions.
+    tutorial: https://www.youtube.com/watch?v=HbUxXJKitS4
+  - id: negativa
+    name: Negativa
+    category: ground
+    origin: capoeira
+    functions: [ground-transitions, unilateral-support, hip-mobility]
+    importance: useful
+    description: A low, supported position for moving safely between standing and the ground.
+    tutorial: https://www.youtube.com/watch?v=iRb8inBYpf0
+  - id: role
+    name: Rolê
+    category: ground
+    origin: capoeira
+    functions: [ground-transitions, coordination, spatial-awareness]
+    importance: useful
+    description: A circular ground transition that links supported positions with a return to movement.
+    tutorial: https://www.youtube.com/watch?v=YkjKw8FPA6Y
+  - id: meia-lua-de-frente
+    name: Meia-lua de frente
+    category: rotation
+    origin: capoeira
+    functions: [rotation, balance, coordination]
+    importance: optional
+    description: A controlled front crescent kick for rotational coordination and balance.
+    tutorial: https://www.youtube.com/watch?v=mQkcWdbaV3o
+  - id: queixada
+    name: Queixada
+    category: rotation
+    origin: capoeira
+    functions: [rotation, balance, coordination]
+    importance: optional
+    description: A turning, outside-in kick that develops rotation and controlled reorientation.
+    tutorial: https://www.youtube.com/watch?v=-VlCCRnKfLs
+  - id: armada
+    name: Armada
+    category: rotation
+    origin: capoeira
+    functions: [rotation, spatial-awareness, balance]
+    importance: optional
+    description: A spinning kick practiced for deliberate turning, orientation, and balance.
+    tutorial: https://www.youtube.com/watch?v=mPVHfPh9nPU
+  - id: pogos
+    name: Pogos
+    category: jumping
+    origin: calisthenics
+    functions: [elasticity, ankle-strength, reactive-landing]
+    importance: useful
+    description: Small, controlled two-foot rebounds that develop ankle elasticity and quiet reactive landings.
+    tutorial: https://www.youtube.com/watch?v=PdhY2bCMJgQ
+  - id: skipping-drills
+    name: Skipping drills
+    category: jumping
+    origin: calisthenics
+    functions: [elasticity, coordination, rhythm]
+    importance: useful
+    description: Light skipping and B-skip patterns for rhythm, coordination, and springy running mechanics.
+    tutorial: https://alpfitness.com/knowledge-base/running-drills/
+  - id: bear-walk
+    name: Bear walk
+    category: ground
+    origin: animal-flow
+    functions: [locomotion, shoulder-support, coordination]
+    importance: useful
+    description: Four-point locomotion with hands and feet moving beneath a stable trunk.
+    tutorial: https://gmb.io/bear/
+  - id: crab-walk
+    name: Crab walk
+    category: ground
+    origin: animal-flow
+    functions: [locomotion, posterior-support, coordination]
+    importance: useful
+    description: Reverse-facing ground locomotion that develops shoulder support and spatial awareness.
+    tutorial: https://help.gmb.io/article/553-additional-exercise-tutorials-help
+  - id: lizard-walk
+    name: Lizard walk
+    category: ground
+    origin: animal-flow
+    functions: [locomotion, shoulder-support, hip-mobility]
+    importance: optional
+    description: Low crawling locomotion that asks for coordinated shoulder support and hip movement.
+    tutorial: https://www.youtube.com/watch?v=NX6JvqPqWio
+  - id: bar-hang
+    name: Bar hang
+    category: vertical
+    origin: calisthenics
+    functions: [grip, shoulder-support, hanging]
+    importance: useful
+    description: A relaxed or active hang for grip, shoulder comfort, and vertical body support.
+    tutorial: https://gmb.io/hanging/
+  - id: cartwheel-au
+    name: Cartwheel / au
+    category: rotation
+    origin: capoeira
+    functions: [inversion, lateral-movement, spatial-awareness]
+    importance: useful
+    description: A controlled sideways inversion that returns smoothly to standing.
+    tutorial: https://www.youtube.com/watch?v=Br3rusbuKPY
+  - id: wheel-backbend
+    name: Wheel / backbend
+    category: rotation
+    origin: mobility
+    functions: [inversion, shoulder-mobility, spinal-extension]
+    importance: optional
+    description: A controlled bridge or wheel shape used for inversion, shoulder range, and spinal extension.
+    tutorial: https://gmb.io/bridge/
+  - id: low-au
+    name: Low au
+    category: rotation
+    origin: capoeira
+    functions: [inversion, ground-transitions, lateral-movement]
+    importance: useful
+    description: A low, compact cartwheel variation with close-to-ground feet.
+    tutorial: https://www.youtube.com/watch?v=QOo21W_rR54
+  - id: meia-lua-de-compasso
+    name: Meia-lua de compasso
+    category: rotation
+    origin: capoeira
+    functions: [rotation, balance, hip-mobility]
+    importance: optional
+    description: A turning, hands-supported kicking pattern that combines hinge, rotation, and reorientation.
+    tutorial: https://www.youtube.com/watch?v=IiLqVCyyoPs
+  - id: lunges
+    name: Lunges
+    category: capacity
+    origin: general-training
+    functions: [leg-strength, hip-mobility, balance]
+    importance: useful
+    description: Controlled stepping lunges for single-leg strength, hip range, and balance.
+    tutorial: https://gmb.io/bodyweight-leg-exercises/
+  - id: walking-front-kicks
+    name: Walking front kicks
+    category: capacity
+    origin: mobility
+    functions: [hamstring-mobility, hip-mobility, balance]
+    importance: optional
+    description: Slow walking front kicks used as dynamic leg mobility and balance practice.
+    tutorial: https://fitbod.me/exercises/walking-front-kicks
+  - id: bag-work
+    name: Bag work
+    category: capacity
+    origin: striking
+    functions: [conditioning, coordination, kicking]
+    importance: optional
+    description: Controlled striking or kicking rounds for conditioning and coordinated force production.
+    tutorial: https://www.youtube.com/watch?v=r1x-LrAnS10

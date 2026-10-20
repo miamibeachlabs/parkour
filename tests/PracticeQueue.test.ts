@@ -80,14 +80,47 @@ test('locked skills explain the unmet hard requirement', () => {
   expect(kong?.missing.map(skill => skill.id)).toEqual(['ground-kong']);
 });
 
-test('helpful foundations improve recommendation priority without unlocking a skill', () => {
+test('supporting practice improves recommendation priority without unlocking a skill', () => {
   const profile: SkillProfile = {
     states: { 'animal-landing': 'acquired' },
     sessions: [],
   };
   const precision = practiceQueue(parkour, profile)
     .find(item => item.skill.id === 'precision-landing');
-  expect(precision?.reasons).toContain('supported by foundations');
+  expect(precision?.reasons).toContain('supported by practice');
+});
+
+test('movement practice belongs to the same ordinary skill map', () => {
+  const profile: SkillProfile = { states: {}, sessions: [] };
+  expect(activeLearning(parkour, profile).map(skill => skill.id)).not.toContain('ginga');
+  expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ginga');
+  expect(practiceQueue(parkour, profile).find(item => item.skill.id === 'ginga')?.skill.category).toBe('ground');
+});
+
+test('the queue begins a soft progression at its lowest unpracticed movement', () => {
+  const empty: SkillProfile = { states: {}, sessions: [] };
+  expect(needsAttention(parkour, empty).map(item => item.skill.id)).toContain('low-au');
+  expect(needsAttention(parkour, empty).map(item => item.skill.id)).not.toContain('cartwheel-au');
+  const queue = practiceQueue(parkour, empty);
+  expect(queue.map(item => item.skill.id)).toContain('cartwheel-au');
+  expect(queue.find(item => item.skill.id === 'low-au')?.priority)
+    .toBeGreaterThan(queue.find(item => item.skill.id === 'cartwheel-au')?.priority ?? 0);
+
+  const skippedAhead: SkillProfile = {
+    states: {},
+    sessions: [{ id: 'cartwheel', date: '2026-10-20', entries: [{ skill: 'cartwheel-au', intensity: 'medium' }] }],
+  };
+  expect(needsAttention(parkour, skippedAhead).map(item => item.skill.id)).toContain('cartwheel-au');
+});
+
+test('a combo records practice for its components without becoming a skill', () => {
+  const profile: SkillProfile = {
+    states: {},
+    sessions: [{ id: 'combo', date: '2026-10-19', entries: [{ kind: 'combo', id: 'monkey-roll', skills: ['monkey-walk', 'sideways-roll'], intensity: 'medium' }] }],
+  };
+  expect(practiceEvents(profile).map(event => event.skill)).toEqual(['monkey-walk', 'sideways-roll']);
+  expect(activeLearning(parkour, profile).map(skill => skill.id)).toEqual(expect.arrayContaining(['monkey-walk', 'sideways-roll']));
+  expect(parkour.skills.map(skill => skill.id)).not.toContain('monkey-roll');
 });
 
 test('existing practice becomes a durable learning path until explicitly acquired', () => {
