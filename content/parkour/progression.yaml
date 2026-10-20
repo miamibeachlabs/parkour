@@ -48,6 +48,6 @@ standing-jump:
     - pogos
     - skipping-drills
 
-low-au:
+cartwheel-au:
   supports:
-    - cartwheel-au
+    - low-au

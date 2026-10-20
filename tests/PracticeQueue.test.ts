@@ -97,6 +97,22 @@ test('movement practice belongs to the same ordinary skill map', () => {
   expect(practiceQueue(parkour, profile).find(item => item.skill.id === 'ginga')?.skill.category).toBe('ground');
 });
 
+test('the queue begins a soft progression at its lowest unpracticed movement', () => {
+  const empty: SkillProfile = { states: {}, sessions: [] };
+  expect(needsAttention(parkour, empty).map(item => item.skill.id)).toContain('low-au');
+  expect(needsAttention(parkour, empty).map(item => item.skill.id)).not.toContain('cartwheel-au');
+  const queue = practiceQueue(parkour, empty);
+  expect(queue.map(item => item.skill.id)).toContain('cartwheel-au');
+  expect(queue.find(item => item.skill.id === 'low-au')?.priority)
+    .toBeGreaterThan(queue.find(item => item.skill.id === 'cartwheel-au')?.priority ?? 0);
+
+  const skippedAhead: SkillProfile = {
+    states: {},
+    sessions: [{ id: 'cartwheel', date: '2026-10-20', entries: [{ skill: 'cartwheel-au', intensity: 'medium' }] }],
+  };
+  expect(needsAttention(parkour, skippedAhead).map(item => item.skill.id)).toContain('cartwheel-au');
+});
+
 test('a combo records practice for its components without becoming a skill', () => {
   const profile: SkillProfile = {
     states: {},

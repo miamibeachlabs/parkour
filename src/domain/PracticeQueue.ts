@@ -102,11 +102,13 @@ export const practiceQueue = (
     const progress = progressOf(profile, skill.id);
     const learning = progress === 'learning';
     const unlocks = outgoing(pack, skill.id, 'requires').length;
+    const prepares = outgoing(pack, skill.id, 'supports').length;
     const supportingPractice = incoming(pack, skill.id, 'supports')
       .filter(relation => isSatisfied(profile, relation.from)).length;
     const priority = skill.importance * (skillDebt + categoryDebt * .45)
       + (learning ? 1 : 0)
       + unlocks * .2
+      + prepares * 1.5
       + supportingPractice * .3;
     const reasons = [
       skill.importance === 3 ? 'core foundation' : undefined,
@@ -115,6 +117,7 @@ export const practiceQueue = (
       learning ? 'actively learning' : progress === 'not-started' ? 'ready to learn' : undefined,
       supportingPractice ? 'supported by practice' : undefined,
       unlocks > 0 ? `unlocks ${unlocks} skill${unlocks === 1 ? '' : 's'}` : undefined,
+      prepares > 0 ? `prepares ${prepares} later skill${prepares === 1 ? '' : 's'}` : undefined,
     ].filter((reason): reason is string => Boolean(reason));
 
     return {
@@ -153,15 +156,21 @@ export const missingRequirements = (pack: SkillPack, profile: SkillProfile, skil
     .filter((candidate): candidate is Skill => candidate !== undefined);
 
 export const readyToLearn = (pack: SkillPack, profile: SkillProfile) =>
-  practiceQueue(pack, profile).filter(item => progressOf(profile, item.skill.id) === 'not-started');
+  practiceQueue(pack, profile).filter(item =>
+    progressOf(profile, item.skill.id) === 'not-started' && isNewStart(pack, profile, item.skill));
 
 export const activeLearning = (pack: SkillPack, profile: SkillProfile) =>
   pack.skills.filter(skill =>
     progressOf(profile, skill.id) === 'learning');
 
+const isNewStart = (pack: SkillPack, profile: SkillProfile, skill: Skill) =>
+  incoming(pack, skill.id, 'supports')
+    .every(relation => progressOf(profile, relation.from) !== 'not-started');
+
 export const needsAttention = (pack: SkillPack, profile: SkillProfile) =>
   practiceQueue(pack, profile).filter(item =>
-    progressOf(profile, item.skill.id) === 'learning' || item.freshness !== 'fresh');
+    progressOf(profile, item.skill.id) === 'learning'
+      || (item.freshness !== 'fresh' && isNewStart(pack, profile, item.skill)));
 
 export type RecordedSession = Readonly<{
   session: CompletedSession;
