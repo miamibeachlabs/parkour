@@ -31,28 +31,27 @@ test('the queue surfaces stale, foundational skills first', () => {
     states: { 'animal-landing': 'acquired' },
     sessions: [{ id: 'landing', date: '2026-09-27', entries: [{ skill: 'animal-landing', intensity: 'medium' }] }],
   };
-  const queue = practiceQueue(parkour, profile);
+  const queue = practiceQueue(parkour, profile, '2026-09-28');
   expect(queue.find(item => item.skill.id === 'animal-landing')?.freshness).toBe('fresh');
   expect(queue[0].skill.id).not.toBe('animal-landing');
 });
 
-test('freshness follows completed training sessions rather than calendar days', () => {
+test('freshness follows calendar days rather than the number of completed sessions', () => {
   const profile: SkillProfile = {
     states: { 'animal-landing': 'acquired' },
     sessions: [
-      { id: 'landing', date: '2020-01-01', entries: [{ skill: 'animal-landing', intensity: 'medium' }] },
-      { id: 'one', date: '2026-09-20', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
-      { id: 'two', date: '2026-09-22', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
-      { id: 'three', date: '2026-09-24', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
-      { id: 'four', date: '2026-09-26', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+      { id: 'landing', date: '2026-09-24', entries: [{ skill: 'animal-landing', intensity: 'medium' }] },
+      { id: 'one', date: '2026-09-25', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+      { id: 'two', date: '2026-09-26', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
+      { id: 'three', date: '2026-09-27', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
     ],
   };
-  const landing = practiceQueue(parkour, profile).find(item => item.skill.id === 'animal-landing');
-  expect(landing?.sessionsSincePractice).toBe(4);
-  expect(landing?.freshness).toBe('stale');
+  const landing = practiceQueue(parkour, profile, '2026-09-27').find(item => item.skill.id === 'animal-landing');
+  expect(landing?.daysSincePractice).toBe(3);
+  expect(landing?.freshness).toBe('getting-stale');
 });
 
-test('heavier practice carries freshness through more later training sessions', () => {
+test('heavier practice carries freshness through more calendar days', () => {
   const profile: SkillProfile = {
     states: { 'animal-landing': 'acquired', 'sideways-roll': 'acquired', 'shoulder-roll': 'acquired' },
     sessions: [
@@ -68,9 +67,9 @@ test('heavier practice carries freshness through more later training sessions', 
       { id: 'later', date: '2026-09-22', entries: [{ skill: 'safety-vault', intensity: 'medium' }] },
     ],
   };
-  const bySkill = new Map(practiceQueue(parkour, profile).map(item => [item.skill.id, item]));
-  expect(bySkill.get('animal-landing')?.freshness).toBe('getting-stale');
-  expect(bySkill.get('sideways-roll')?.freshness).toBe('fresh');
+  const bySkill = new Map(practiceQueue(parkour, profile, '2026-09-24').map(item => [item.skill.id, item]));
+  expect(bySkill.get('animal-landing')?.freshness).toBe('stale');
+  expect(bySkill.get('sideways-roll')?.freshness).toBe('getting-stale');
   expect(bySkill.get('shoulder-roll')?.freshness).toBe('fresh');
 });
 

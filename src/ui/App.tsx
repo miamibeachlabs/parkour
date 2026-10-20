@@ -33,12 +33,12 @@ import { exportProfile, importProfile, loadProfile, saveProfile } from '../infra
 const today = () => new Date().toISOString().slice(0, 10);
 const title = (word: string) => word.replace(/(^|-)\w/g, match => match.toUpperCase());
 const freshnessLabel = (item: QueueItem) =>
-  item.sessionsSincePractice === undefined ? 'Not practiced yet'
-    : `${item.lastPracticeIntensity ? `${title(item.lastPracticeIntensity)} · ` : ''}${item.sessionsSincePractice === 0 ? 'In your latest session' : `${item.sessionsSincePractice} session${item.sessionsSincePractice === 1 ? '' : 's'} ago`}`;
+  item.daysSincePractice === undefined ? 'Not practiced yet'
+    : `${item.lastPracticeIntensity ? `${title(item.lastPracticeIntensity)} · ` : ''}${item.daysSincePractice === 0 ? 'Practiced today' : `${item.daysSincePractice} day${item.daysSincePractice === 1 ? '' : 's'} ago`}`;
 const freshnessTone = (item: QueueItem) =>
-  item.sessionsSincePractice === undefined ? 'unpracticed' : item.freshness;
+  item.daysSincePractice === undefined ? 'unpracticed' : item.freshness;
 const freshnessName = (item: QueueItem) =>
-  item.sessionsSincePractice === undefined ? 'Not practiced' : item.freshness.replace('-', ' ');
+  item.daysSincePractice === undefined ? 'Not practiced' : item.freshness.replace('-', ' ');
 const displayDate = (date: string) => date === today() ? 'Today' : new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
 export const App = ({ pack }: { pack: SkillPack }) => {
@@ -162,7 +162,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
         const counts = { learning: skills.filter(skill => progressOf(profile, skill.id) === 'learning').length, acquired: skills.filter(skill => progressOf(profile, skill.id) === 'acquired').length, available: skills.filter(skill => progressOf(profile, skill.id) === 'not-started' && isUnlocked(pack, profile, skill.id)).length, locked: skills.filter(skill => !isUnlocked(pack, profile, skill.id)).length };
         const freshness = freshCategories.find(item => item.category.id === category.id);
         const summary = [`${counts.learning} learning`, `${counts.acquired} acquired`, `${counts.available} available`, `${counts.locked} locked`].filter(part => !part.startsWith('0 ')).join(' · ') || 'Untouched';
-        return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.sessionsSincePractice === undefined ? 'Untouched' : freshness.sessionsSincePractice === 0 ? 'Latest session' : `${freshness.sessionsSincePractice} session${freshness.sessionsSincePractice === 1 ? '' : 's'} ago`}</small></button></li>;
+        return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.daysSincePractice === undefined ? 'Untouched' : freshness.daysSincePractice === 0 ? 'Practiced today' : `${freshness.daysSincePractice} day${freshness.daysSincePractice === 1 ? '' : 's'} ago`}</small></button></li>;
       })}</ul></section>
       <SessionHistory pack={pack} history={history} onSelect={setSelected} onEdit={setEditingSession} onRemove={removeHistory} onEraseAll={eraseAllProgress} onExport={downloadBackup} onImport={restoreBackup} />
     </section>
@@ -246,11 +246,14 @@ const SessionEditor = ({ pack, session, onClose, onSave }: { pack: SkillPack; se
     setDraft(current => ({ ...current, entries: current.entries.filter(entry => sessionEntryId(entry) !== entryId) }));
   const addEntry = (skill: SkillId) =>
     setDraft(current => current.entries.some(entry => sessionEntrySkills(entry).includes(skill)) ? current : ({ ...current, entries: [...current.entries, { kind: 'skill', skill, intensity: 'medium', approach: 'ready' }] }));
+  const addCombo = (skills: readonly SkillId[]) =>
+    setDraft(current => ({ ...current, entries: [...current.entries, { kind: 'combo', id: crypto.randomUUID(), skills, intensity: 'medium' }] }));
   return <div class="overlay" role="presentation" onClick={onClose}><aside class="detail session-editor" role="dialog" aria-modal="true" aria-label="Edit practice session" onClick={event => event.stopPropagation()}>
     <button class="close" onClick={onClose} aria-label="Close editor">×</button><p class="eyebrow">PRACTICE HISTORY</p><h2>Edit workout</h2><p class="description">Correct when it happened, what you practiced, and how hard it felt.</p>
     <label class="date-field">Date<input type="date" value={draft.date} onInput={event => setDraft(current => ({ ...current, date: event.currentTarget.value }))} /></label>
     <div class="editor-entries">{draft.entries.map(entry => <article key={sessionEntryId(entry)} class="session-entry"><strong>{sessionEntryName(pack, entry)}</strong><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => updateEntry(sessionEntryId(entry), current => ({ ...current, intensity }))}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => removeEntry(sessionEntryId(entry))} aria-label={`Remove ${sessionEntryName(pack, entry)} from this workout`}>×</button></article>)}</div>
     <label class="add-skill">Add another skill<select value="" onChange={event => addEntry(event.currentTarget.value)}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !draft.entries.some(entry => sessionEntrySkills(entry).includes(skill.id))).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label>
+    <ComboBuilder pack={pack} onAdd={addCombo} />
     <button class="finish-session" onClick={() => onSave(draft)} disabled={!draft.date || draft.entries.length === 0}>Save workout</button>
   </aside></div>;
 };
