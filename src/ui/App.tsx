@@ -7,6 +7,8 @@ import {
   type Skill,
   type SkillId,
   type SkillPack,
+  type SkillProgress,
+  type SkillState,
   type SkillProfile,
   incoming,
   isUnlocked,
@@ -19,7 +21,7 @@ import {
   sessionEntrySkills,
 } from '../domain/SkillGraph.ts';
 import {
-  activeLearning,
+  activePractice,
   categoryFreshness,
   completedSessions,
   missingRequirements,
@@ -47,7 +49,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   const [editingSession, setEditingSession] = useState<CompletedSession | undefined>();
   useEffect(() => saveProfile(profile), [profile]);
 
-  const active = activeLearning(pack, profile);
+  const active = activePractice(pack, profile);
   const attention = needsAttention(pack, profile);
   const attentionBySkill = new Map(attention.map(item => [item.skill.id, item]));
   const ready = readyToLearn(pack, profile).slice(0, 4);
@@ -94,13 +96,13 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     const states = { ...current.states };
     for (const entry of open.entries)
       for (const skill of sessionEntrySkills(entry))
-        if (states[skill] !== 'acquired') states[skill] = 'learning';
+        if (states[skill] === undefined) states[skill] = 'exploring';
     return {
       states,
       sessions: [...current.sessions, { id: crypto.randomUUID(), date: today(), entries: open.entries }],
     };
   });
-  const setState = (skill: SkillId, state: 'learning' | 'acquired') =>
+  const setState = (skill: SkillId, state: SkillState) =>
     setProfile(current => ({ ...current, states: { ...current.states, [skill]: state } }));
   const removeHistory = (sessionId: string) =>
     setProfile(current => removeCompletedSession(current, sessionId));
@@ -136,16 +138,16 @@ export const App = ({ pack }: { pack: SkillPack }) => {
 
     <SessionPanel pack={pack} session={session} onSelect={setSelected} onIntensity={setSessionIntensity} onRemove={removeFromSession} onAddCombo={addCombo} onFinish={finishSession} />
 
-    <section class="active-section" aria-labelledby="active-learning">
-      <div class="section-heading"><div><p class="eyebrow">YOUR CURRICULUM</p><h2 id="active-learning">Currently learning</h2></div><p>Practicing a skill starts Learning. It stays here until you decide it has become Acquired.</p></div>
+    <section class="active-section" aria-labelledby="in-progress">
+      <div class="section-heading"><div><p class="eyebrow">YOUR CURRICULUM</p><h2 id="in-progress">In progress</h2></div><p>A first attempt begins Exploring. Move it to Practicing when the movement is familiar enough to work on deliberately.</p></div>
       {active.length ? <div class="active-categories">{pack.categories.map(category => {
         const skills = active.filter(skill => skill.category === category.id);
-        return skills.length ? <section key={category.id} class="active-category"><h3>{category.name}</h3>{skills.map(skill => <LearningSkill key={skill.id} item={attentionBySkill.get(skill.id)!} inSession={inSession(skill.id)} onAdd={() => addToSession(skill.id)} onSelect={() => setSelected(skill.id)} />)}</section> : null;
-      })}</div> : <p class="empty-state">Choose an available skill and record your first practice to begin a visible learning path.</p>}
+        return skills.length ? <section key={category.id} class="active-category"><h3>{category.name}</h3>{skills.map(skill => <ProgressSkill key={skill.id} item={attentionBySkill.get(skill.id)!} state={progressOf(profile, skill.id)} inSession={inSession(skill.id)} onAdd={() => addToSession(skill.id)} onSelect={() => setSelected(skill.id)} />)}</section> : null;
+      })}</div> : <p class="empty-state">Choose an available movement and record your first practice to begin a visible path.</p>}
     </section>
 
     <section class="queue-section" aria-labelledby="needs-attention">
-      <div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="needs-attention">Needs attention</h2></div><p>Skills you are learning stay actionable here, alongside stale practice, maintenance, and useful new starts.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="needs-attention">Needs attention</h2></div><p>Movements in progress stay actionable here, alongside stale practice, maintenance, and useful new starts.</p></div>
       <div class="queue-list">{attention.slice(0, 6).map((item, index) => <SkillRow key={item.skill.id} item={item} index={index + 1} inSession={inSession(item.skill.id)} onAdd={() => addToSession(item.skill.id)} onSelect={() => setSelected(item.skill.id)} />)}</div>
     </section>
 
@@ -159,10 +161,10 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     <section class="split-sections">
       <section class="surface" aria-labelledby="terrain"><p class="eyebrow">YOUR MAP</p><h2 id="terrain">Terrain traversed</h2><ul class="coverage-list">{pack.categories.map(category => {
         const skills = pack.skills.filter(skill => skill.category === category.id);
-        const counts = { learning: skills.filter(skill => progressOf(profile, skill.id) === 'learning').length, acquired: skills.filter(skill => progressOf(profile, skill.id) === 'acquired').length, available: skills.filter(skill => progressOf(profile, skill.id) === 'not-started' && isUnlocked(pack, profile, skill.id)).length, locked: skills.filter(skill => !isUnlocked(pack, profile, skill.id)).length };
+        const counts = { exploring: skills.filter(skill => progressOf(profile, skill.id) === 'exploring').length, practicing: skills.filter(skill => progressOf(profile, skill.id) === 'practicing').length, acquired: skills.filter(skill => progressOf(profile, skill.id) === 'acquired').length, available: skills.filter(skill => progressOf(profile, skill.id) === 'untried' && isUnlocked(pack, profile, skill.id)).length, locked: skills.filter(skill => !isUnlocked(pack, profile, skill.id)).length };
         const freshness = freshCategories.find(item => item.category.id === category.id);
-        const summary = [`${counts.learning} learning`, `${counts.acquired} acquired`, `${counts.available} available`, `${counts.locked} locked`].filter(part => !part.startsWith('0 ')).join(' · ') || 'Untouched';
-        return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => progressOf(profile, skill.id) === 'learning')?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.daysSincePractice === undefined ? 'Untouched' : freshness.daysSincePractice === 0 ? 'Practiced today' : `${freshness.daysSincePractice} day${freshness.daysSincePractice === 1 ? '' : 's'} ago`}</small></button></li>;
+        const summary = [`${counts.exploring} exploring`, `${counts.practicing} practicing`, `${counts.acquired} acquired`, `${counts.available} available`, `${counts.locked} locked`].filter(part => !part.startsWith('0 ')).join(' · ') || 'Untouched';
+        return <li key={category.id}><button class="coverage-button" onClick={() => setSelected(skills.find(skill => ['exploring', 'practicing'].includes(progressOf(profile, skill.id)))?.id ?? skills[0]?.id)}><span><strong>{category.name}</strong><small>{summary}</small></span><small class={freshness?.freshness}>{freshness?.daysSincePractice === undefined ? 'Untouched' : freshness.daysSincePractice === 0 ? 'Practiced today' : `${freshness.daysSincePractice} day${freshness.daysSincePractice === 1 ? '' : 's'} ago`}</small></button></li>;
       })}</ul></section>
       <SessionHistory pack={pack} history={history} onSelect={setSelected} onEdit={setEditingSession} onRemove={removeHistory} onEraseAll={eraseAllProgress} onExport={downloadBackup} onImport={restoreBackup} />
     </section>
@@ -178,7 +180,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   </main>;
 };
 
-const LearningSkill = ({ item, inSession, onAdd, onSelect }: { item: QueueItem; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class={`learning-skill ${freshnessTone(item)}`}><button onClick={onSelect}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{inSession ? 'In today’s session' : freshnessLabel(item)}</span></small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
+const ProgressSkill = ({ item, state, inSession, onAdd, onSelect }: { item: QueueItem; state: SkillProgress; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class={`active-skill ${freshnessTone(item)}`}><button onClick={onSelect}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{title(state)} · {inSession ? 'In today’s session' : freshnessLabel(item)}</span></small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
 
 const SkillRow = ({ item, index, inSession, onAdd, onSelect }: { item: QueueItem; index: number; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class={`skill-row ${freshnessTone(item)}`}><span class="rank">{index}</span><button class="skill-summary" onClick={onSelect}><strong>{item.skill.name}</strong><small><span class={`freshness-chip ${freshnessTone(item)}`}>{freshnessName(item)}</span><span>{freshnessLabel(item)} · {item.reasons.filter(reason => reason !== 'needs refreshing').slice(0, 2).join(' · ')}</span></small></button><button class={inSession ? 'in-session' : 'practice'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add'}</button></article>;
 
@@ -189,12 +191,13 @@ const SkillCatalogue = ({ pack, profile, onSelect }: { pack: SkillPack; profile:
 const catalogueStatus = (pack: SkillPack, profile: SkillProfile, skill: Skill) => {
   const progress = progressOf(profile, skill.id);
   if (progress === 'acquired') return 'Acquired';
-  if (progress === 'learning') return 'Learning';
-  if (isUnlocked(pack, profile, skill.id)) return 'Ready to explore';
+  if (progress === 'practicing') return 'Practicing';
+  if (progress === 'exploring') return 'Exploring';
+  if (isUnlocked(pack, profile, skill.id)) return 'Untried · ready to explore';
   return 'Explore requirements';
 };
 
-const SkillDetail = ({ pack, skill, profile, inSession, onClose, onSelect, onAdd, onSetState }: { pack: SkillPack; skill: Skill; profile: SkillProfile; inSession: boolean; onClose: () => void; onSelect: (skill: SkillId) => void; onAdd: (skill: SkillId, approach?: SessionApproach) => void; onSetState: (skill: SkillId, state: 'learning' | 'acquired') => void }) => {
+const SkillDetail = ({ pack, skill, profile, inSession, onClose, onSelect, onAdd, onSetState }: { pack: SkillPack; skill: Skill; profile: SkillProfile; inSession: boolean; onClose: () => void; onSelect: (skill: SkillId) => void; onAdd: (skill: SkillId, approach?: SessionApproach) => void; onSetState: (skill: SkillId, state: SkillState) => void }) => {
   const sources = (kind: RelationKind) => incoming(pack, skill.id, kind).map(relation => pack.skills.find(candidate => candidate.id === relation.from)).filter((candidate): candidate is Skill => candidate !== undefined);
   const targets = (kind: RelationKind) => outgoing(pack, skill.id, kind).map(relation => pack.skills.find(candidate => candidate.id === relation.to)).filter((candidate): candidate is Skill => candidate !== undefined);
   const unlocked = isUnlocked(pack, profile, skill.id);
@@ -205,7 +208,7 @@ const SkillDetail = ({ pack, skill, profile, inSession, onClose, onSelect, onAdd
     {skill.functions.length > 0 && <div class="function-tags" aria-label="Movement functions">{skill.functions.map(functionName => <span key={functionName}>{title(functionName)}</span>)}</div>}
     <div class="tutorials">{skill.tutorialUrl && <a class="tutorial" href={skill.tutorialUrl} target="_blank" rel="noreferrer">Open tutorial ↗</a>}<a class="tutorial alternatives" href={alternatives} target="_blank" rel="noreferrer">Search for alternatives ↗</a></div>{!unlocked && <p class="model-note">The model suggests building the listed requirements first. You can still add this as a Stretch; completed practice establishes your own frontier.</p>}
     <Relationship title="Requires" skills={sources('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Supported by" skills={sources('supports')} profile={profile} onSelect={onSelect} /><Relationship title="Enables" skills={targets('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Supports" skills={targets('supports')} profile={profile} onSelect={onSelect} />
-    <div class="detail-actions"><button class={inSession ? 'in-session detail-session' : unlocked ? 'practice detail-session' : 'stretch-add detail-session'} onClick={() => onAdd(skill.id, unlocked ? 'ready' : 'stretch')} disabled={inSession}>{inSession ? 'In today’s session' : unlocked ? 'Add to today’s session' : 'Add as stretch'}</button><p class="eyebrow">YOUR STATE</p><div class="button-group"><button class={state === 'learning' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'learning')}>Learning</button><button class={state === 'acquired' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'acquired')}>Acquired</button></div></div>
+    <div class="detail-actions"><button class={inSession ? 'in-session detail-session' : unlocked ? 'practice detail-session' : 'stretch-add detail-session'} onClick={() => onAdd(skill.id, unlocked ? 'ready' : 'stretch')} disabled={inSession}>{inSession ? 'In today’s session' : unlocked ? 'Add to today’s session' : 'Add as stretch'}</button><p class="eyebrow">YOUR STATE · {title(state)}</p><div class="button-group"><button class={state === 'exploring' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'exploring')}>Exploring</button><button class={state === 'practicing' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'practicing')}>Practicing</button><button class={state === 'acquired' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'acquired')}>Acquired</button></div></div>
   </aside></div>;
 };
 

@@ -9,6 +9,31 @@ render(<App pack={parkour} />, root);
 
 const developingLocally = ['localhost', '127.0.0.1'].includes(location.hostname);
 
+const checkForUpdate = (registration: ServiceWorkerRegistration) => {
+  if (!navigator.onLine) return;
+  void registration.update().catch(error => console.error('Could not check for an update.', error));
+};
+
+const installProductionServiceWorker = () => {
+  let reloadedForNewController = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadedForNewController) return;
+    reloadedForNewController = true;
+    location.reload();
+  });
+
+  void navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' })
+    .then(registration => {
+      checkForUpdate(registration);
+      window.addEventListener('online', () => checkForUpdate(registration));
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate(registration);
+      });
+    })
+    .catch(error => console.error('Offline installation failed.', error));
+};
+
 if ('serviceWorker' in navigator && developingLocally)
   window.addEventListener('load', () => {
     void navigator.serviceWorker.getRegistrations()
@@ -20,7 +45,4 @@ if ('serviceWorker' in navigator && developingLocally)
       .catch(error => console.error('Could not clear local preview caches.', error));
   });
 else if ('serviceWorker' in navigator)
-  window.addEventListener('load', () => {
-    void navigator.serviceWorker.register('./service-worker.js')
-      .catch(error => console.error('Offline installation failed.', error));
-  });
+  window.addEventListener('load', installProductionServiceWorker);

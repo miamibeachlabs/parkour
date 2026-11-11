@@ -33,7 +33,7 @@ const downloadApp = async () => {
 };
 
 self.addEventListener('install', event => {
-  event.waitUntil(downloadApp().then(() => developingLocally ? self.skipWaiting() : undefined));
+  event.waitUntil(downloadApp().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {

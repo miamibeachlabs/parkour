@@ -8,7 +8,7 @@ Parkour Practice combines three distinct ideas without collapsing them into one 
 - elapsed time since practice reveals what is getting stale; and
 - the queue explains what deserves attention today.
 
-It is not a duration tracker or a claim to measure mastery. An open session holds the skills you choose to work on today, each Medium by default. A session can also contain an ad-hoc combination of two or more skills, such as `Monkey walk → sideways roll`. A combination remains a fact about that workout rather than becoming a new curriculum node, while still recording practice for each component. Only **Finish session** turns those choices into completed practice history. You explicitly mark a skill as learning or acquired; acquired skills remain in the queue when they need maintenance.
+It is not a duration tracker or a claim to measure mastery. A movement is **Untried**, **Exploring**, **Practicing**, or **Acquired**: recording a first attempt makes it Exploring; Practicing and Acquired remain your explicit judgment. An open session holds the movements you choose to work on today, each Medium by default. A session can also contain an ad-hoc combination of two or more movements, such as `Monkey walk → sideways roll`. A combination remains a fact about that workout rather than becoming a new curriculum node, while still recording practice for each component. Only **Finish session** turns those choices into completed practice history.
 
 Completed sessions are visible as grouped history, so it is always clear which skills were recorded together and at what intensity. You can remove an individual mistaken session, or use the confirmed **Erase all local progress** action to return this browser to its initial state.
 
@@ -27,7 +27,7 @@ The build emits static browser files in `dist/`. `wrangler.jsonc` serves them th
 
 ## Model
 
-`src/domain/SkillGraph.ts` contains the reusable graph vocabulary: skills, categories, default-route `requires` edges, soft `supports` edges, open sessions, completed sessions, and a user profile. Completed sessions own the historical facts; finishing one establishes evidence for each practiced skill when calculating the learner's frontier, without automatically calling it Acquired.
+`src/domain/SkillGraph.ts` contains the reusable graph vocabulary: skills, categories, default-route `requires` edges, soft `supports` edges, open sessions, completed sessions, and a user profile. Completed sessions own the historical facts; finishing one establishes an Exploring state and evidence for the learner's frontier, without automatically calling it Practicing or Acquired. Existing `learning` state migrates to Practicing when the profile loads.
 
 `src/domain/PracticeQueue.ts` derives the practice queue, category freshness, learning frontier, and locked skills. It is pure TypeScript: no Preact, storage, or Parkour knowledge. Requirements guide the frontier until the learner establishes a different baseline through completed practice. Freshness measures calendar days since a skill or category was last practiced, so short logged sessions do not accelerate decay. The weekly baseline uses intensity-sensitive reserves: light practice becomes stale after three days, medium after seven, and intensive after fourteen. Importance, practice debt, category neglect, learning state, and the number of unlocked skills provide small, visible ranking influences.
 
@@ -41,4 +41,4 @@ The core is intentionally app-local for now. If several training products need g
 
 ## Offline use
 
-The first online visit downloads the complete app. Later launches use the locally cached shell immediately and remain usable in airplane mode. A newer build downloads completely before it replaces the existing cache. Practice data remains in browser storage through updates.
+The first online visit downloads the complete app. Later launches use the locally cached shell immediately and remain usable in airplane mode. When online, the app checks for a fully cached newer build at launch, when connectivity returns, and when the app becomes visible; it reloads only after that newer build controls the page. Practice data remains in browser storage through updates.
