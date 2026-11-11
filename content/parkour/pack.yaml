@@ -182,14 +182,28 @@ skills:
     category: ground
     origin: animal-flow
     importance: useful
-    description: Four-point locomotion with hands and feet moving beneath a stable trunk.
+    description: Travel from bear position with coordinated hands and feet beneath a stable trunk.
+    tutorial: https://gmb.io/bear/
+  - id: bear-position
+    name: Bear position
+    category: ground
+    origin: animal-flow
+    importance: useful
+    description: A straight- or near-straight-legged four-point support position that prepares bear walking and ground transitions.
     tutorial: https://gmb.io/bear/
   - id: crab-walk
     name: Crab walk
     category: ground
     origin: animal-flow
     importance: useful
-    description: Reverse-facing ground locomotion that develops shoulder support and spatial awareness.
+    description: Travel from reverse tabletop with coordinated hands and feet behind the body.
+    tutorial: https://help.gmb.io/article/553-additional-exercise-tutorials-help
+  - id: reverse-tabletop
+    name: Reverse tabletop
+    category: ground
+    origin: mobility
+    importance: useful
+    description: A face-up hands-and-feet support position with an open chest, used as the base for crab walking and ground transitions.
     tutorial: https://help.gmb.io/article/553-additional-exercise-tutorials-help
   - id: lizard-walk
     name: Lizard walk
@@ -213,11 +227,11 @@ skills:
     description: A controlled sideways inversion that returns smoothly to standing.
     tutorial: https://www.youtube.com/watch?v=Br3rusbuKPY
   - id: wheel-backbend
-    name: Wheel / backbend
+    name: Wheel pose
     category: rotation
     origin: mobility
     importance: optional
-    description: A controlled bridge or wheel shape used for inversion, shoulder range, and spinal extension.
+    description: A full hands-and-feet backbend used for shoulder range, spinal extension, and inverted support.
     tutorial: https://gmb.io/bridge/
   - id: low-au
     name: Low au
