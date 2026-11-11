@@ -1,0 +1,473 @@
+# Shared-context mapping for Parkour movements. The pack owns names and browsing
+# categories; this file maps stable skill IDs to facets, broad capabilities, and
+# the environmental features a movement uses.
+
+animal-landing:
+  facets:
+    pattern: [lower-body]
+    direction: [vertical]
+    action: [eccentric]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [bilateral]
+    dynamics: [repetition]
+  capabilities:
+    develops: [power, balance, coordination, precision]
+  uses: [open-ground]
+
+sideways-roll:
+  facets:
+    pattern: [transition, rotation]
+    direction: [diagonal, rotational]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [shoulders, back]
+    dynamics: [transition]
+  capabilities:
+    develops: [coordination, agility, perception]
+  uses: [open-ground]
+
+shoulder-roll:
+  facets:
+    pattern: [transition, rotation]
+    direction: [diagonal]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [shoulders, back]
+    dynamics: [transition]
+  capabilities:
+    develops: [coordination, agility, perception]
+  uses: [open-ground]
+
+monkey-walk:
+  facets:
+    pattern: [locomotion, support]
+    direction: [horizontal]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [strength, coordination, mobility]
+  uses: [open-ground]
+
+quadrupedal-movement:
+  facets:
+    pattern: [locomotion, support]
+    direction: [horizontal, diagonal]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [strength, endurance, coordination, mobility]
+  uses: [open-ground]
+
+ground-kong:
+  facets:
+    pattern: [support, transition]
+    direction: [horizontal]
+    action: [ballistic]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [hands, feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [strength, power, coordination]
+  uses: [open-ground]
+
+safety-vault:
+  facets:
+    pattern: [support, transition]
+    direction: [horizontal, diagonal]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [obstacle]
+    contact: [hands, feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [strength, balance, coordination, agility]
+  uses: [obstacle]
+
+sit-spin-vault:
+  facets:
+    pattern: [support, rotation, transition]
+    direction: [rotational]
+    body-orientation: [seated]
+    support: [obstacle]
+    contact: [hands, feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [balance, coordination, agility]
+  uses: [obstacle]
+
+turn-vault:
+  facets:
+    pattern: [support, rotation, transition]
+    direction: [rotational]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [obstacle]
+    contact: [hands, feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [balance, coordination, precision, agility]
+  uses: [obstacle]
+
+kong-vault:
+  facets:
+    pattern: [support, transition]
+    direction: [horizontal]
+    action: [ballistic]
+    body-orientation: [horizontal]
+    support: [obstacle]
+    contact: [hands, feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [strength, power, coordination, agility]
+  uses: [obstacle]
+
+precision-landing:
+  facets:
+    pattern: [lower-body]
+    direction: [vertical, horizontal]
+    action: [eccentric]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [bilateral]
+    dynamics: [repetition]
+  capabilities:
+    develops: [balance, precision, coordination, power]
+  uses: [target]
+
+standing-jump:
+  facets:
+    pattern: [lower-body]
+    direction: [horizontal]
+    action: [concentric, ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [bilateral]
+    dynamics: [repetition]
+  capabilities:
+    develops: [strength, power, coordination]
+  uses: [open-ground]
+
+plyometric-jumps:
+  facets:
+    pattern: [lower-body]
+    direction: [vertical]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [bilateral]
+    dynamics: [repetition]
+  capabilities:
+    develops: [power, endurance, coordination]
+  uses: [open-ground]
+
+running-jump:
+  facets:
+    pattern: [locomotion, lower-body]
+    direction: [horizontal]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [power, speed, precision, balance]
+  uses: [open-ground]
+
+strides:
+  facets:
+    pattern: [locomotion, lower-body]
+    direction: [horizontal]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [speed, power, balance, rhythm]
+  uses: [targets]
+
+wall-run:
+  facets:
+    pattern: [locomotion, support]
+    direction: [vertical, diagonal]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [wall]
+    contact: [feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [power, strength, agility, coordination]
+  uses: [wall]
+
+ginga:
+  facets:
+    pattern: [locomotion, transition]
+    direction: [diagonal]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [rhythm, coordination, balance, agility]
+  uses: [open-ground]
+
+negativa:
+  facets:
+    pattern: [support, transition, mobility]
+    direction: [diagonal]
+    body-orientation: [seated]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [unilateral]
+    dynamics: [transition]
+  capabilities:
+    develops: [strength, mobility, coordination, balance]
+  uses: [open-ground]
+
+role:
+  facets:
+    pattern: [support, transition, rotation]
+    direction: [rotational]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [hands, feet]
+    dynamics: [transition]
+  capabilities:
+    develops: [agility, coordination, mobility, perception]
+  uses: [open-ground]
+
+meia-lua-de-frente:
+  facets:
+    pattern: [rotation, lower-body]
+    direction: [rotational]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [unilateral]
+    dynamics: [repetition]
+  capabilities:
+    develops: [balance, coordination, mobility]
+  uses: [open-space]
+
+queixada:
+  facets:
+    pattern: [rotation, lower-body]
+    direction: [rotational]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [unilateral]
+    dynamics: [transition]
+  capabilities:
+    develops: [balance, coordination, agility]
+  uses: [open-space]
+
+armada:
+  facets:
+    pattern: [rotation, lower-body]
+    direction: [rotational]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [unilateral]
+    dynamics: [transition]
+  capabilities:
+    develops: [balance, coordination, perception, agility]
+  uses: [open-space]
+
+pogos:
+  facets:
+    pattern: [lower-body]
+    direction: [vertical]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [bilateral]
+    dynamics: [repetition]
+  capabilities:
+    develops: [power, endurance, coordination]
+  uses: [open-ground]
+
+skipping-drills:
+  facets:
+    pattern: [locomotion, lower-body]
+    direction: [horizontal]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [power, coordination, rhythm, speed]
+  uses: [open-ground]
+
+bear-walk:
+  facets:
+    pattern: [locomotion, support]
+    direction: [horizontal]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [strength, endurance, coordination]
+  uses: [open-ground]
+
+crab-walk:
+  facets:
+    pattern: [locomotion, support]
+    direction: [horizontal]
+    body-orientation: [supine]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [strength, mobility, coordination, perception]
+  uses: [open-ground]
+
+lizard-walk:
+  facets:
+    pattern: [locomotion, support, mobility]
+    direction: [horizontal]
+    body-orientation: [prone]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [strength, mobility, coordination]
+  uses: [open-ground]
+
+bar-hang:
+  facets:
+    pattern: [support, pull]
+    direction: [vertical]
+    action: [isometric]
+    body-orientation: [hanging]
+    support: [bar]
+    contact: [hands]
+    symmetry: [bilateral]
+    dynamics: [hold]
+  capabilities:
+    develops: [strength, endurance, mobility]
+  uses: [bar]
+
+cartwheel-au:
+  facets:
+    pattern: [rotation, support, transition]
+    direction: [diagonal, rotational]
+    body-orientation: [inverted]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    body-shape: [straddle]
+    dynamics: [transition]
+  capabilities:
+    develops: [balance, coordination, perception, strength]
+  uses: [open-ground]
+
+wheel-backbend:
+  facets:
+    pattern: [support, mobility]
+    direction: [vertical]
+    action: [isometric]
+    body-orientation: [inverted]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [bilateral]
+    body-shape: [arch]
+    dynamics: [hold]
+  capabilities:
+    develops: [mobility, flexibility, strength]
+  uses: [open-ground]
+
+low-au:
+  facets:
+    pattern: [rotation, support, transition]
+    direction: [diagonal, rotational]
+    body-orientation: [inverted]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    body-shape: [tuck]
+    dynamics: [transition]
+  capabilities:
+    develops: [balance, coordination, mobility]
+  uses: [open-ground]
+
+meia-lua-de-compasso:
+  facets:
+    pattern: [rotation, support, lower-body]
+    direction: [rotational]
+    action: [ballistic]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [unilateral]
+    dynamics: [transition]
+  capabilities:
+    develops: [mobility, balance, coordination, perception]
+  uses: [open-space]
+
+lunges:
+  facets:
+    pattern: [lower-body, mobility]
+    direction: [vertical]
+    action: [concentric, eccentric]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [unilateral]
+    dynamics: [repetition]
+  capabilities:
+    develops: [strength, mobility, balance]
+  uses: [open-ground]
+
+walking-front-kicks:
+  facets:
+    pattern: [locomotion, mobility, lower-body]
+    direction: [horizontal]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [feet]
+    symmetry: [unilateral]
+    dynamics: [locomotion]
+  capabilities:
+    develops: [mobility, balance, coordination]
+  uses: [open-space]
+
+bag-work:
+  facets:
+    pattern: [lower-body, locomotion]
+    direction: [horizontal]
+    action: [ballistic]
+    body-orientation: [upright]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [asymmetric]
+    dynamics: [repetition]
+  capabilities:
+    develops: [power, endurance, coordination]
+  uses: [punching-bag]

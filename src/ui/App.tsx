@@ -186,7 +186,7 @@ const SkillRow = ({ item, index, inSession, onAdd, onSelect }: { item: QueueItem
 
 const StretchSkill = ({ skill, missing, inSession, onAdd, onSelect }: { skill: Skill; missing: readonly Skill[]; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class="stretch-skill"><button class="stretch-summary" onClick={onSelect}><strong>{skill.name}</strong><small>Suggested first: {missing.map(item => item.name).join(', ')}</small></button><button class={inSession ? 'in-session' : 'stretch-add'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add as stretch'}</button></article>;
 
-const SkillCatalogue = ({ pack, profile, onSelect }: { pack: SkillPack; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => <section class="catalogue-section" aria-labelledby="catalogue"><div class="section-heading"><div><p class="eyebrow">EXPLORE</p><h2 id="catalogue">Practice map</h2></div><p>Browse every movement you practice. Details show its functions, relationships, and how it fits into your own path.</p></div><div class="catalogue-grid">{pack.categories.map(category => { const skills = pack.skills.filter(skill => skill.category === category.id); return <section class="catalogue-category" key={category.id}><h3>{category.name}</h3><p>{category.description}</p><ul>{skills.map(skill => <li key={skill.id}><button onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{catalogueStatus(pack, profile, skill)}</small></button></li>)}</ul></section>; })}</div></section>;
+const SkillCatalogue = ({ pack, profile, onSelect }: { pack: SkillPack; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => <section class="catalogue-section" aria-labelledby="catalogue"><div class="section-heading"><div><p class="eyebrow">EXPLORE</p><h2 id="catalogue">Practice map</h2></div><p>Browse every movement you practice. Details show its facets, capabilities, relationships, and how it fits into your own path.</p></div><div class="catalogue-grid">{pack.categories.map(category => { const skills = pack.skills.filter(skill => skill.category === category.id); return <section class="catalogue-category" key={category.id}><h3>{category.name}</h3><p>{category.description}</p><ul>{skills.map(skill => <li key={skill.id}><button onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{catalogueStatus(pack, profile, skill)}</small></button></li>)}</ul></section>; })}</div></section>;
 
 const catalogueStatus = (pack: SkillPack, profile: SkillProfile, skill: Skill) => {
   const progress = progressOf(profile, skill.id);
@@ -205,14 +205,24 @@ const SkillDetail = ({ pack, skill, profile, inSession, onClose, onSelect, onAdd
   const alternatives = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${skill.name} ${skill.origin} tutorial`)}`;
   return <div class="overlay" role="presentation" onClick={onClose}><aside class="detail" role="dialog" aria-modal="true" aria-label={`${skill.name} details`} onClick={event => event.stopPropagation()}>
     <button class="close" onClick={onClose} aria-label="Close details">×</button><p class="eyebrow">{pack.categories.find(category => category.id === skill.category)?.name.toUpperCase()} · {skill.origin.toUpperCase()}</p><h2>{skill.name}</h2><p class="description">{skill.description}</p>
-    {skill.functions.length > 0 && <div class="function-tags" aria-label="Movement functions">{skill.functions.map(functionName => <span key={functionName}>{title(functionName)}</span>)}</div>}
+    <MovementContext skill={skill} />
     <div class="tutorials">{skill.tutorialUrl && <a class="tutorial" href={skill.tutorialUrl} target="_blank" rel="noreferrer">Open tutorial ↗</a>}<a class="tutorial alternatives" href={alternatives} target="_blank" rel="noreferrer">Search for alternatives ↗</a></div>{!unlocked && <p class="model-note">The model suggests building the listed requirements first. You can still add this as a Stretch; completed practice establishes your own frontier.</p>}
-    <Relationship title="Requires" skills={sources('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Supported by" skills={sources('supports')} profile={profile} onSelect={onSelect} /><Relationship title="Enables" skills={targets('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Supports" skills={targets('supports')} profile={profile} onSelect={onSelect} />
+    <Relationship title="Requires" skills={sources('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Common route from" skills={sources('progresses-to')} profile={profile} onSelect={onSelect} /><Relationship title="Transfers from" skills={sources('transfers-to')} profile={profile} onSelect={onSelect} /><Relationship title="Enables" skills={targets('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Progresses to" skills={targets('progresses-to')} profile={profile} onSelect={onSelect} /><Relationship title="Transfers to" skills={targets('transfers-to')} profile={profile} onSelect={onSelect} />
     <div class="detail-actions"><button class={inSession ? 'in-session detail-session' : unlocked ? 'practice detail-session' : 'stretch-add detail-session'} onClick={() => onAdd(skill.id, unlocked ? 'ready' : 'stretch')} disabled={inSession}>{inSession ? 'In today’s session' : unlocked ? 'Add to today’s session' : 'Add as stretch'}</button><p class="eyebrow">YOUR STATE · {title(state)}</p><div class="button-group"><button class={state === 'exploring' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'exploring')}>Exploring</button><button class={state === 'practicing' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'practicing')}>Practicing</button><button class={state === 'acquired' ? 'selected' : ''} onClick={() => onSetState(skill.id, 'acquired')}>Acquired</button></div></div>
   </aside></div>;
 };
 
 const Relationship = ({ title, skills, profile, onSelect }: { title: string; skills: readonly Skill[]; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => skills.length ? <section class="relationship"><h3>{title}</h3><ul>{skills.map(skill => <li key={skill.id}><span>{progressOf(profile, skill.id) === 'acquired' ? '✓' : '○'}</span><button onClick={() => onSelect(skill.id)}>{skill.name}</button></li>)}</ul></section> : null;
+
+const MovementContext = ({ skill }: { skill: Skill }) => {
+  const facets = Object.entries(skill.facets).flatMap(([dimension, values]) => values.map(value => `${title(dimension)} · ${title(value)}`));
+  return <div class="context-tags" aria-label="Movement context">
+    {facets.map(facet => <span key={facet}>{facet}</span>)}
+    {skill.capabilities.develops.map(capability => <span key={`develops-${capability}`}>Develops · {title(capability)}</span>)}
+    {skill.capabilities.requires.map(capability => <span key={`requires-${capability}`}>Requires · {title(capability)}</span>)}
+    {skill.uses.map(resource => <span key={`uses-${resource}`}>Uses · {title(resource)}</span>)}
+  </div>;
+};
 
 const sessionEntryName = (pack: SkillPack, entry: SkillProfile['sessions'][number]['entries'][number]) =>
   entry.kind === 'combo'

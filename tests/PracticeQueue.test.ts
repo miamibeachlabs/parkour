@@ -86,14 +86,14 @@ test('locked skills explain the unmet hard requirement', () => {
   expect(kong?.missing.map(skill => skill.id)).toEqual(['ground-kong']);
 });
 
-test('supporting practice improves recommendation priority without unlocking a skill', () => {
+test('common-route practice improves recommendation priority without unlocking a skill', () => {
   const profile: SkillProfile = {
     states: { 'animal-landing': 'acquired' },
     sessions: [],
   };
   const precision = practiceQueue(parkour, profile)
     .find(item => item.skill.id === 'precision-landing');
-  expect(precision?.reasons).toContain('supported by practice');
+  expect(precision?.reasons).toContain('prepared by practice');
 });
 
 test('movement practice belongs to the same ordinary skill map', () => {
@@ -101,6 +101,14 @@ test('movement practice belongs to the same ordinary skill map', () => {
   expect(activePractice(parkour, profile).map(skill => skill.id)).not.toContain('ginga');
   expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ginga');
   expect(practiceQueue(parkour, profile).find(item => item.skill.id === 'ginga')?.skill.category).toBe('ground');
+});
+
+test('every movement carries shared-context facets, capability links, and environmental use', () => {
+  const kong = parkour.skills.find(skill => skill.id === 'kong-vault');
+  expect(kong?.facets.pattern).toEqual(expect.arrayContaining(['support', 'transition']));
+  expect(kong?.capabilities.develops).toEqual(expect.arrayContaining(['strength', 'power', 'coordination']));
+  expect(kong?.uses).toEqual(['obstacle']);
+  expect(parkour.skills.every(skill => skill.capabilities.develops.length > 0)).toBe(true);
 });
 
 test('the queue begins a soft progression at its lowest unpracticed movement', () => {

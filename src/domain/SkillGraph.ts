@@ -1,6 +1,22 @@
 export type SkillId = string;
 export type CategoryId = string;
-export type RelationKind = 'requires' | 'supports';
+export type RelationKind = 'requires' | 'progresses-to' | 'transfers-to';
+export type FacetDimension =
+  | 'pattern'
+  | 'direction'
+  | 'action'
+  | 'body-orientation'
+  | 'support'
+  | 'contact'
+  | 'symmetry'
+  | 'body-shape'
+  | 'dynamics'
+  | 'assistance';
+export type MovementFacets = Readonly<Partial<Record<FacetDimension, readonly string[]>>>;
+export type CapabilityLinks = Readonly<{
+  develops: readonly string[];
+  requires: readonly string[];
+}>;
 export type SkillState = 'exploring' | 'practicing' | 'acquired';
 export type SkillProgress = 'untried' | SkillState;
 export type PracticeIntensity = 'light' | 'medium' | 'intensive';
@@ -19,7 +35,9 @@ export type Skill = Readonly<{
   category: CategoryId;
   importance: 1 | 2 | 3;
   origin: string;
-  functions: readonly string[];
+  facets: MovementFacets;
+  capabilities: CapabilityLinks;
+  uses: readonly string[];
   tutorialUrl?: string;
 }>;
 

@@ -112,20 +112,20 @@ export const practiceQueue = (
     const progress = progressOf(profile, skill.id);
     const inProgress = isInProgress(progress);
     const unlocks = outgoing(pack, skill.id, 'requires').length;
-    const prepares = outgoing(pack, skill.id, 'supports').length;
-    const supportingPractice = incoming(pack, skill.id, 'supports')
+    const prepares = outgoing(pack, skill.id, 'progresses-to').length;
+    const progressionPractice = incoming(pack, skill.id, 'progresses-to')
       .filter(relation => isSatisfied(profile, relation.from)).length;
     const priority = skill.importance * (skillDebt + categoryDebt * .45)
       + (inProgress ? 1 : 0)
       + unlocks * .2
       + prepares * 1.5
-      + supportingPractice * .3;
+      + progressionPractice * .3;
     const reasons = [
       skill.importance === 3 ? 'core foundation' : undefined,
       skillPractice !== undefined && freshness(skillPractice) === 'stale' ? 'needs refreshing' : undefined,
       categoryPractice !== undefined && freshness(categoryPractice) === 'stale' ? 'category neglected' : undefined,
       progress === 'exploring' ? 'exploring' : progress === 'practicing' ? 'actively practicing' : progress === 'untried' ? 'ready to explore' : undefined,
-      supportingPractice ? 'supported by practice' : undefined,
+      progressionPractice ? 'prepared by practice' : undefined,
       unlocks > 0 ? `unlocks ${unlocks} skill${unlocks === 1 ? '' : 's'}` : undefined,
       prepares > 0 ? `prepares ${prepares} later skill${prepares === 1 ? '' : 's'}` : undefined,
     ].filter((reason): reason is string => Boolean(reason));
@@ -177,7 +177,7 @@ export const activePractice = (pack: SkillPack, profile: SkillProfile) =>
     isInProgress(progressOf(profile, skill.id)));
 
 const isNewStart = (pack: SkillPack, profile: SkillProfile, skill: Skill) =>
-  incoming(pack, skill.id, 'supports')
+  incoming(pack, skill.id, 'progresses-to')
     .every(relation => progressOf(profile, relation.from) !== 'untried');
 
 export const needsAttention = (pack: SkillPack, profile: SkillProfile, asOf = calendarToday()) =>
