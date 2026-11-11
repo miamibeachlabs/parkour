@@ -67,7 +67,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
       ...current,
       openSession: {
         startedAt: current.openSession?.startedAt ?? new Date().toISOString(),
-        entries: [...(current.openSession?.entries ?? []), { kind: 'skill', skill, intensity: 'medium', approach }],
+        entries: [...(current.openSession?.entries ?? []), { kind: 'skill', skill, intensity: 'light', approach }],
       },
     }));
   };
@@ -86,7 +86,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     ...current,
     openSession: {
       startedAt: current.openSession?.startedAt ?? new Date().toISOString(),
-      entries: [...(current.openSession?.entries ?? []), { kind: 'combo', id: crypto.randomUUID(), skills, intensity: 'medium' }],
+      entries: [...(current.openSession?.entries ?? []), { kind: 'combo', id: crypto.randomUUID(), skills, intensity: 'light' }],
     },
   }));
 
@@ -258,9 +258,9 @@ const SessionEditor = ({ pack, session, onClose, onSave }: { pack: SkillPack; se
   const removeEntry = (entryId: string) =>
     setDraft(current => ({ ...current, entries: current.entries.filter(entry => sessionEntryId(entry) !== entryId) }));
   const addEntry = (skill: SkillId) =>
-    setDraft(current => current.entries.some(entry => sessionEntrySkills(entry).includes(skill)) ? current : ({ ...current, entries: [...current.entries, { kind: 'skill', skill, intensity: 'medium', approach: 'ready' }] }));
+    setDraft(current => current.entries.some(entry => sessionEntrySkills(entry).includes(skill)) ? current : ({ ...current, entries: [...current.entries, { kind: 'skill', skill, intensity: 'light', approach: 'ready' }] }));
   const addCombo = (skills: readonly SkillId[]) =>
-    setDraft(current => ({ ...current, entries: [...current.entries, { kind: 'combo', id: crypto.randomUUID(), skills, intensity: 'medium' }] }));
+    setDraft(current => ({ ...current, entries: [...current.entries, { kind: 'combo', id: crypto.randomUUID(), skills, intensity: 'light' }] }));
   return <div class="overlay" role="presentation" onClick={onClose}><aside class="detail session-editor" role="dialog" aria-modal="true" aria-label="Edit practice session" onClick={event => event.stopPropagation()}>
     <button class="close" onClick={onClose} aria-label="Close editor">×</button><p class="eyebrow">PRACTICE HISTORY</p><h2>Edit workout</h2><p class="description">Correct when it happened, what you practiced, and how hard it felt.</p>
     <label class="date-field">Date<input type="date" value={draft.date} onInput={event => setDraft(current => ({ ...current, date: event.currentTarget.value }))} /></label>
