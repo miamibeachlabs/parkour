@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { parkour } from '../src/generated/parkour.ts';
 import { isUnlocked, practiceEvents, progressOf, readinessDepth, removeCompletedSession, replaceCompletedSession, type SkillProfile } from '../src/domain/SkillGraph.ts';
 import { exportProfile, importProfile } from '../src/infrastructure/LocalProfile.ts';
-import { activeLearning, completedSessions, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
+import { activePractice, completedSessions, lockedSkills, needsAttention, practiceQueue, skillsAtReadinessDepth } from '../src/domain/PracticeQueue.ts';
 
 test('unpracticed prerequisites hold back the kong vault by default', () => {
   expect(isUnlocked(parkour, { states: {}, sessions: [] }, 'kong-vault')).toBe(false);
@@ -14,7 +14,7 @@ test('unpracticed prerequisites hold back the kong vault by default', () => {
 
 test('completed practice establishes the learner frontier without claiming acquisition', () => {
   const profile: SkillProfile = {
-    states: { 'ground-kong': 'learning' },
+    states: { 'ground-kong': 'practicing' },
     sessions: [{
       id: 'ground-kong',
       date: '2026-09-27',
@@ -23,7 +23,14 @@ test('completed practice establishes the learner frontier without claiming acqui
   };
   expect(isUnlocked(parkour, profile, 'ground-kong')).toBe(true);
   expect(isUnlocked(parkour, profile, 'kong-vault')).toBe(true);
-  expect(profile.states['ground-kong']).toBe('learning');
+  expect(profile.states['ground-kong']).toBe('practicing');
+});
+
+test('skill progress distinguishes untried, exploring, practicing, and acquired', () => {
+  expect(progressOf({ states: {}, sessions: [] }, 'ground-kong')).toBe('untried');
+  expect(progressOf({ states: {}, sessions: [{ id: 'attempt', date: '2026-11-11', entries: [{ skill: 'ground-kong', intensity: 'light' }] }] }, 'ground-kong')).toBe('exploring');
+  expect(progressOf({ states: { 'ground-kong': 'practicing' }, sessions: [] }, 'ground-kong')).toBe('practicing');
+  expect(progressOf({ states: { 'ground-kong': 'acquired' }, sessions: [] }, 'ground-kong')).toBe('acquired');
 });
 
 test('the queue surfaces stale, foundational skills first', () => {
@@ -91,7 +98,7 @@ test('supporting practice improves recommendation priority without unlocking a s
 
 test('movement practice belongs to the same ordinary skill map', () => {
   const profile: SkillProfile = { states: {}, sessions: [] };
-  expect(activeLearning(parkour, profile).map(skill => skill.id)).not.toContain('ginga');
+  expect(activePractice(parkour, profile).map(skill => skill.id)).not.toContain('ginga');
   expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ginga');
   expect(practiceQueue(parkour, profile).find(item => item.skill.id === 'ginga')?.skill.category).toBe('ground');
 });
@@ -118,23 +125,23 @@ test('a combo records practice for its components without becoming a skill', () 
     sessions: [{ id: 'combo', date: '2026-10-19', entries: [{ kind: 'combo', id: 'monkey-roll', skills: ['monkey-walk', 'sideways-roll'], intensity: 'medium' }] }],
   };
   expect(practiceEvents(profile).map(event => event.skill)).toEqual(['monkey-walk', 'sideways-roll']);
-  expect(activeLearning(parkour, profile).map(skill => skill.id)).toEqual(expect.arrayContaining(['monkey-walk', 'sideways-roll']));
+  expect(activePractice(parkour, profile).map(skill => skill.id)).toEqual(expect.arrayContaining(['monkey-walk', 'sideways-roll']));
   expect(parkour.skills.map(skill => skill.id)).not.toContain('monkey-roll');
 });
 
-test('existing practice becomes a durable learning path until explicitly acquired', () => {
+test('existing practice becomes an exploring path until explicitly updated', () => {
   const profile: SkillProfile = {
     states: {},
     sessions: [{ id: 'vault', date: '2026-09-27', entries: [{ skill: 'safety-vault', intensity: 'medium' }] }],
   };
-  expect(progressOf(profile, 'safety-vault')).toBe('learning');
-  expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('safety-vault');
+  expect(progressOf(profile, 'safety-vault')).toBe('exploring');
+  expect(activePractice(parkour, profile).map(skill => skill.id)).toContain('safety-vault');
   expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('safety-vault');
 });
 
-test('a completed stretch becomes learning practice and advances the frontier', () => {
+test('a completed stretch becomes exploring practice and advances the frontier', () => {
   const profile: SkillProfile = {
-    states: { 'ground-kong': 'learning' },
+    states: { 'ground-kong': 'exploring' },
     sessions: [{
       id: 'stretch',
       date: '2026-09-27',
@@ -142,7 +149,7 @@ test('a completed stretch becomes learning practice and advances the frontier', 
     }],
   };
   expect(isUnlocked(parkour, profile, 'ground-kong')).toBe(true);
-  expect(activeLearning(parkour, profile).map(skill => skill.id)).toContain('ground-kong');
+  expect(activePractice(parkour, profile).map(skill => skill.id)).toContain('ground-kong');
   expect(practiceQueue(parkour, profile).map(item => item.skill.id)).toContain('ground-kong');
   expect(needsAttention(parkour, profile).map(item => item.skill.id)).toContain('ground-kong');
 });
@@ -200,7 +207,7 @@ test('editing a session replaces its facts without duplicating the workout', () 
 
 test('a backup round-trips only known skills from this pack', () => {
   const profile: SkillProfile = {
-    states: { 'ground-kong': 'learning' },
+    states: { 'ground-kong': 'practicing' },
     sessions: [{ id: 'beach-session', date: '2026-09-27', entries: [{ skill: 'ground-kong', intensity: 'medium' }] }],
   };
   const skillIds = parkour.skills.map(skill => skill.id);

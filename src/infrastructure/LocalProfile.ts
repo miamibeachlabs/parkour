@@ -8,16 +8,18 @@ import {
   sessionEntrySkills,
 } from '../domain/SkillGraph.ts';
 
-const storageKey = 'parkour-profile-v1';
-const legacyStorageKeys = ['skill-queue-profile-v1'];
+const storageKey = 'parkour-profile-v2';
+const legacyStorageKeys = ['parkour-profile-v1', 'skill-queue-profile-v1'];
 
 const intensities: readonly PracticeIntensity[] = ['light', 'medium', 'intensive'];
 const isIntensity = (value: unknown): value is PracticeIntensity =>
   typeof value === 'string' && intensities.includes(value as PracticeIntensity);
 const isApproach = (value: unknown): value is SessionApproach =>
   value === 'ready' || value === 'stretch';
-const isState = (value: unknown): value is 'learning' | 'acquired' =>
-  value === 'learning' || value === 'acquired';
+const stateFrom = (value: unknown): SkillProfile['states'][string] | undefined =>
+  value === 'learning' ? 'practicing'
+    : value === 'exploring' || value === 'practicing' || value === 'acquired' ? value
+      : undefined;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -46,9 +48,9 @@ const completedSession = (value: unknown): CompletedSession | undefined => {
 
 const profileFrom = (value: unknown): SkillProfile | undefined => {
   if (!isRecord(value) || !isRecord(value.states) || !Array.isArray(value.sessions)) return undefined;
-  const states = Object.entries(value.states);
+  const states = Object.entries(value.states).map(([skill, state]) => [skill, stateFrom(state)] as const);
   const sessions = value.sessions.map(completedSession);
-  if (!states.every(([, state]) => isState(state))
+  if (!states.every(([, state]) => state !== undefined)
     || !sessions.every((session): session is CompletedSession => session !== undefined)) return undefined;
   const open = value.openSession;
   if (open !== undefined && (!isRecord(open) || typeof open.startedAt !== 'string' || !Array.isArray(open.entries))) return undefined;
@@ -67,7 +69,7 @@ const profileFrom = (value: unknown): SkillProfile | undefined => {
 
 type ProfileBackup = Readonly<{
   format: 'parkour-profile';
-  version: 1;
+  version: 1 | 2;
   exportedAt: string;
   profile: SkillProfile;
 }>;
@@ -90,7 +92,11 @@ export const loadProfile = (): SkillProfile => {
     const profile = JSON.parse(saved) as SkillProfile & { practice?: unknown };
     return profileFrom(profile)
       ?? (isRecord(profile) && 'states' in profile
-        ? { states: profile.states as SkillProfile['states'], sessions: legacySessions(profile.practice), openSession: profile.openSession as SkillProfile['openSession'] }
+        ? profileFrom({
+          states: profile.states,
+          sessions: legacySessions(profile.practice),
+          openSession: profile.openSession,
+        }) ?? emptyProfile()
         : emptyProfile());
   } catch {
     return emptyProfile();
@@ -106,7 +112,7 @@ export const saveProfile = (profile: SkillProfile) =>
 export const exportProfile = (profile: SkillProfile): string =>
   JSON.stringify({
     format: 'parkour-profile',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     profile,
   } satisfies ProfileBackup, null, 2);
@@ -114,7 +120,7 @@ export const exportProfile = (profile: SkillProfile): string =>
 export const importProfile = (text: string, skillIds: readonly string[]): SkillProfile | undefined => {
   try {
     const backup = JSON.parse(text) as Partial<ProfileBackup>;
-    if (backup.format !== 'parkour-profile' || backup.version !== 1) return undefined;
+    if (backup.format !== 'parkour-profile' || (backup.version !== 1 && backup.version !== 2)) return undefined;
     const profile = profileFrom(backup.profile);
     if (!profile) return undefined;
     const known = new Set(skillIds);

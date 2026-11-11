@@ -1,8 +1,8 @@
 export type SkillId = string;
 export type CategoryId = string;
 export type RelationKind = 'requires' | 'supports';
-export type SkillState = 'learning' | 'acquired';
-export type SkillProgress = 'not-started' | SkillState;
+export type SkillState = 'exploring' | 'practicing' | 'acquired';
+export type SkillProgress = 'untried' | SkillState;
 export type PracticeIntensity = 'light' | 'medium' | 'intensive';
 export type SessionApproach = 'ready' | 'stretch';
 
@@ -120,15 +120,14 @@ export const outgoing = (
   relation.from === skill && (kind === undefined || relation.kind === kind));
 
 // Requirements describe the default route, not a claim that every learner must
-// traverse it. Completed practice is evidence that a skill is usable enough to
-// establish the learner's frontier, while Acquired remains an explicit mastery
-// decision.
+// traverse it. Completed practice establishes the learner's frontier, while
+// reliable acquisition remains an explicit personal decision.
 export const isSatisfied = (profile: SkillProfile, skill: SkillId) =>
-  progressOf(profile, skill) !== 'not-started';
+  progressOf(profile, skill) !== 'untried';
 
 export const progressOf = (profile: SkillProfile, skill: SkillId): SkillProgress =>
   profile.states[skill]
-  ?? (practiceEvents(profile).some(event => event.skill === skill) ? 'learning' : 'not-started');
+  ?? (practiceEvents(profile).some(event => event.skill === skill) ? 'exploring' : 'untried');
 
 export const isUnlocked = (pack: SkillPack, profile: SkillProfile, skill: SkillId) =>
   isSatisfied(profile, skill)

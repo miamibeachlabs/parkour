@@ -6,6 +6,7 @@ import {
   type Skill,
   type SkillId,
   type SkillPack,
+  type SkillProgress,
   type SkillProfile,
   incoming,
   isSatisfied,
@@ -102,20 +103,20 @@ export const practiceQueue = (
   asOf = calendarToday(),
 ): readonly QueueItem[] => pack.skills
   .filter(skill =>
-    isUnlocked(pack, profile, skill.id) || progressOf(profile, skill.id) === 'learning')
+    isUnlocked(pack, profile, skill.id) || isInProgress(progressOf(profile, skill.id)))
   .map(skill => {
     const skillPractice = latestPractice(profile, pack, asOf, skill.id);
     const categoryPractice = latestPractice(profile, pack, asOf, undefined, skill.category);
     const skillDebt = debt(skillPractice);
     const categoryDebt = debt(categoryPractice);
     const progress = progressOf(profile, skill.id);
-    const learning = progress === 'learning';
+    const inProgress = isInProgress(progress);
     const unlocks = outgoing(pack, skill.id, 'requires').length;
     const prepares = outgoing(pack, skill.id, 'supports').length;
     const supportingPractice = incoming(pack, skill.id, 'supports')
       .filter(relation => isSatisfied(profile, relation.from)).length;
     const priority = skill.importance * (skillDebt + categoryDebt * .45)
-      + (learning ? 1 : 0)
+      + (inProgress ? 1 : 0)
       + unlocks * .2
       + prepares * 1.5
       + supportingPractice * .3;
@@ -123,7 +124,7 @@ export const practiceQueue = (
       skill.importance === 3 ? 'core foundation' : undefined,
       skillPractice !== undefined && freshness(skillPractice) === 'stale' ? 'needs refreshing' : undefined,
       categoryPractice !== undefined && freshness(categoryPractice) === 'stale' ? 'category neglected' : undefined,
-      learning ? 'actively learning' : progress === 'not-started' ? 'ready to learn' : undefined,
+      progress === 'exploring' ? 'exploring' : progress === 'practicing' ? 'actively practicing' : progress === 'untried' ? 'ready to explore' : undefined,
       supportingPractice ? 'supported by practice' : undefined,
       unlocks > 0 ? `unlocks ${unlocks} skill${unlocks === 1 ? '' : 's'}` : undefined,
       prepares > 0 ? `prepares ${prepares} later skill${prepares === 1 ? '' : 's'}` : undefined,
@@ -166,19 +167,22 @@ export const missingRequirements = (pack: SkillPack, profile: SkillProfile, skil
 
 export const readyToLearn = (pack: SkillPack, profile: SkillProfile) =>
   practiceQueue(pack, profile).filter(item =>
-    progressOf(profile, item.skill.id) === 'not-started' && isNewStart(pack, profile, item.skill));
+    progressOf(profile, item.skill.id) === 'untried' && isNewStart(pack, profile, item.skill));
 
-export const activeLearning = (pack: SkillPack, profile: SkillProfile) =>
+const isInProgress = (progress: SkillProgress) =>
+  progress === 'exploring' || progress === 'practicing';
+
+export const activePractice = (pack: SkillPack, profile: SkillProfile) =>
   pack.skills.filter(skill =>
-    progressOf(profile, skill.id) === 'learning');
+    isInProgress(progressOf(profile, skill.id)));
 
 const isNewStart = (pack: SkillPack, profile: SkillProfile, skill: Skill) =>
   incoming(pack, skill.id, 'supports')
-    .every(relation => progressOf(profile, relation.from) !== 'not-started');
+    .every(relation => progressOf(profile, relation.from) !== 'untried');
 
 export const needsAttention = (pack: SkillPack, profile: SkillProfile, asOf = calendarToday()) =>
   practiceQueue(pack, profile, asOf).filter(item =>
-    progressOf(profile, item.skill.id) === 'learning'
+    isInProgress(progressOf(profile, item.skill.id))
       || (item.freshness !== 'fresh' && isNewStart(pack, profile, item.skill)));
 
 export type RecordedSession = Readonly<{
