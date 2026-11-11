@@ -333,6 +333,21 @@ bear-walk:
     develops: [strength, endurance, coordination]
   uses: [open-ground]
 
+bear-position:
+  facets:
+    pattern: [support]
+    direction: [horizontal]
+    action: [isometric]
+    body-orientation: [horizontal]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [bilateral]
+    body-shape: [pike]
+    dynamics: [hold]
+  capabilities:
+    develops: [strength, mobility, coordination]
+  uses: [open-ground]
+
 crab-walk:
   facets:
     pattern: [locomotion, support]
@@ -344,6 +359,21 @@ crab-walk:
     dynamics: [locomotion]
   capabilities:
     develops: [strength, mobility, coordination, perception]
+  uses: [open-ground]
+
+reverse-tabletop:
+  facets:
+    pattern: [support, mobility]
+    direction: [horizontal]
+    action: [isometric]
+    body-orientation: [supine]
+    support: [ground]
+    contact: [hands, feet]
+    symmetry: [bilateral]
+    body-shape: [arch]
+    dynamics: [hold]
+  capabilities:
+    develops: [strength, mobility, coordination]
   uses: [open-ground]
 
 lizard-walk:

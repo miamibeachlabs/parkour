@@ -38,6 +38,14 @@ quadrupedal-movement:
     - negativa
     - role
 
+bear-walk:
+  progresses-to:
+    - bear-position
+
+crab-walk:
+  progresses-to:
+    - reverse-tabletop
+
 wall-run:
   transfers-to:
     - precision-landing

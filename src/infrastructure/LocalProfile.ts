@@ -8,8 +8,8 @@ import {
   sessionEntrySkills,
 } from '../domain/SkillGraph.ts';
 
-const storageKey = 'parkour-profile-v2';
-const legacyStorageKeys = ['parkour-profile-v1', 'skill-queue-profile-v1'];
+const storageKey = 'parkour-profile-v3';
+const legacyStorageKeys = ['parkour-profile-v2', 'parkour-profile-v1', 'skill-queue-profile-v1'];
 
 const intensities: readonly PracticeIntensity[] = ['light', 'medium', 'intensive'];
 const isIntensity = (value: unknown): value is PracticeIntensity =>
@@ -69,7 +69,7 @@ const profileFrom = (value: unknown): SkillProfile | undefined => {
 
 type ProfileBackup = Readonly<{
   format: 'parkour-profile';
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   exportedAt: string;
   profile: SkillProfile;
 }>;
@@ -84,13 +84,14 @@ const legacySessions = (practice: unknown): readonly CompletedSession[] =>
       : []) : [];
 
 export const loadProfile = (): SkillProfile => {
-  const saved = localStorage.getItem(storageKey)
-    ?? legacyStorageKeys.map(key => localStorage.getItem(key)).find(Boolean);
+  const current = localStorage.getItem(storageKey);
+  const legacy = legacyStorageKeys.map(key => localStorage.getItem(key)).find(Boolean);
+  const saved = current ?? legacy;
   if (!saved) return emptyProfile();
 
   try {
     const profile = JSON.parse(saved) as SkillProfile & { practice?: unknown };
-    return profileFrom(profile)
+    const parsed = profileFrom(profile)
       ?? (isRecord(profile) && 'states' in profile
         ? profileFrom({
           states: profile.states,
@@ -98,6 +99,7 @@ export const loadProfile = (): SkillProfile => {
           openSession: profile.openSession,
         }) ?? emptyProfile()
         : emptyProfile());
+    return parsed;
   } catch {
     return emptyProfile();
   }
@@ -112,7 +114,7 @@ export const saveProfile = (profile: SkillProfile) =>
 export const exportProfile = (profile: SkillProfile): string =>
   JSON.stringify({
     format: 'parkour-profile',
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     profile,
   } satisfies ProfileBackup, null, 2);
@@ -120,7 +122,7 @@ export const exportProfile = (profile: SkillProfile): string =>
 export const importProfile = (text: string, skillIds: readonly string[]): SkillProfile | undefined => {
   try {
     const backup = JSON.parse(text) as Partial<ProfileBackup>;
-    if (backup.format !== 'parkour-profile' || (backup.version !== 1 && backup.version !== 2)) return undefined;
+    if (backup.format !== 'parkour-profile' || (backup.version !== 1 && backup.version !== 2 && backup.version !== 3)) return undefined;
     const profile = profileFrom(backup.profile);
     if (!profile) return undefined;
     const known = new Set(skillIds);
