@@ -103,6 +103,7 @@ test('weekly light practice continues to distinguish older attention', () => {
   };
   const queueAt = (date: string) => practiceQueue(parkour, profile, date)
     .find(item => item.skill.id === 'animal-landing');
+  expect(queueAt('2026-09-08')?.daysOverdue).toBeUndefined();
   const afterOneWeek = queueAt('2026-09-14');
   const afterTwoWeeks = queueAt('2026-09-21');
   const afterThreeWeeks = queueAt('2026-09-28');
