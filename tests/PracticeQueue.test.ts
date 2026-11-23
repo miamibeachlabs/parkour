@@ -80,6 +80,39 @@ test('heavier practice carries freshness through more calendar days', () => {
   expect(bySkill.get('shoulder-roll')?.freshness).toBe('fresh');
 });
 
+test('attention pressure keeps distinguishing overdue practice', () => {
+  const profile: SkillProfile = {
+    states: { 'animal-landing': 'acquired', 'sideways-roll': 'acquired' },
+    sessions: [
+      { id: 'older', date: '2026-09-14', entries: [{ skill: 'animal-landing', intensity: 'medium' }] },
+      { id: 'newer', date: '2026-09-18', entries: [{ skill: 'sideways-roll', intensity: 'medium' }] },
+    ],
+  };
+  const bySkill = new Map(practiceQueue(parkour, profile, '2026-09-28').map(item => [item.skill.id, item]));
+  const animalLanding = bySkill.get('animal-landing');
+  const sidewaysRoll = bySkill.get('sideways-roll');
+  expect(animalLanding?.daysOverdue).toBe(7);
+  expect(sidewaysRoll?.daysOverdue).toBe(3);
+  expect(animalLanding?.priority).toBeGreaterThan(sidewaysRoll?.priority ?? 0);
+});
+
+test('weekly light practice continues to distinguish older attention', () => {
+  const profile: SkillProfile = {
+    states: { 'animal-landing': 'acquired' },
+    sessions: [{ id: 'light-practice', date: '2026-09-07', entries: [{ skill: 'animal-landing', intensity: 'light' }] }],
+  };
+  const queueAt = (date: string) => practiceQueue(parkour, profile, date)
+    .find(item => item.skill.id === 'animal-landing');
+  const afterOneWeek = queueAt('2026-09-14');
+  const afterTwoWeeks = queueAt('2026-09-21');
+  const afterThreeWeeks = queueAt('2026-09-28');
+  expect(afterOneWeek?.daysOverdue).toBe(4);
+  expect(afterTwoWeeks?.daysOverdue).toBe(11);
+  expect(afterThreeWeeks?.daysOverdue).toBe(18);
+  expect(afterTwoWeeks?.priority).toBeGreaterThan(afterOneWeek?.priority ?? 0);
+  expect(afterThreeWeeks?.priority).toBeGreaterThan(afterTwoWeeks?.priority ?? 0);
+});
+
 test('locked skills explain the unmet hard requirement', () => {
   const kong = lockedSkills(parkour, { states: {}, sessions: [] })
     .find(item => item.skill.id === 'kong-vault');

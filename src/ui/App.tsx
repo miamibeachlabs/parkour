@@ -36,12 +36,16 @@ const today = () => new Date().toISOString().slice(0, 10);
 const title = (word: string) => word.replace(/(^|-)\w/g, match => match.toUpperCase());
 const freshnessLabel = (item: QueueItem) =>
   item.daysSincePractice === undefined ? 'Not practiced yet'
-    : `${item.lastPracticeIntensity ? `${title(item.lastPracticeIntensity)} · ` : ''}${item.daysSincePractice === 0 ? 'Practiced today' : `${item.daysSincePractice} day${item.daysSincePractice === 1 ? '' : 's'} ago`}`;
+    : `${item.lastPracticeIntensity ? `${title(item.lastPracticeIntensity)} · ` : ''}${item.daysSincePractice === 0 ? 'Practiced today' : `${item.daysSincePractice} day${item.daysSincePractice === 1 ? '' : 's'} ago`}${item.daysOverdue === undefined ? '' : item.daysOverdue === 0 ? ' · Due today' : ` · ${item.daysOverdue} day${item.daysOverdue === 1 ? '' : 's'} overdue`}`;
 const freshnessTone = (item: QueueItem) =>
   item.daysSincePractice === undefined ? 'unpracticed' : item.freshness;
 const freshnessName = (item: QueueItem) =>
-  item.daysSincePractice === undefined ? 'Not practiced' : item.freshness.replace('-', ' ');
+  item.daysSincePractice === undefined ? 'Not practiced'
+    : item.daysOverdue === undefined ? item.freshness.replace('-', ' ')
+      : item.daysOverdue === 0 ? 'Due' : 'Overdue';
 const displayDate = (date: string) => date === today() ? 'Today' : new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const practiceRoleName = (skill: Skill) => skill.practiceRole === 'parkour' ? 'Parkour practice' : 'Supporting practice';
+const skillOptionName = (skill: Skill) => `${skill.name} · ${practiceRoleName(skill)}`;
 
 export const App = ({ pack }: { pack: SkillPack }) => {
   const [profile, setProfile] = useState<SkillProfile>(loadProfile);
@@ -49,8 +53,9 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   const [editingSession, setEditingSession] = useState<CompletedSession | undefined>();
   useEffect(() => saveProfile(profile), [profile]);
 
-  const active = activePractice(pack, profile);
-  const attention = needsAttention(pack, profile);
+  const parkourPractice = (skill: Skill) => skill.practiceRole === 'parkour';
+  const active = activePractice(pack, profile).filter(parkourPractice);
+  const attention = needsAttention(pack, profile).filter(item => parkourPractice(item.skill));
   const attentionBySkill = new Map(attention.map(item => [item.skill.id, item]));
   const ready = readyToLearn(pack, profile).slice(0, 4);
   const stretch = skillsAtReadinessDepth(pack, profile, 1);
@@ -133,13 +138,13 @@ export const App = ({ pack }: { pack: SkillPack }) => {
   return <main class="workspace">
     <header class="masthead">
       <div><p class="eyebrow">MIAMI BEACH LABS · {pack.name.toUpperCase()}</p><h1>Parkour Practice<span>.</span></h1><p class="lede">Keep your active curriculum in view, then let freshness show what needs attention.</p></div>
-      <div class="legend" aria-label="Practice freshness legend"><span class="unpracticed">Not practiced</span><span class="fresh">Fresh</span><span class="aging">Getting stale</span><span class="stale">Stale</span></div>
+      <div class="legend" aria-label="Practice freshness legend"><span class="unpracticed">Not practiced</span><span class="fresh">Fresh</span><span class="aging">Getting stale</span><span class="stale">Due / overdue</span></div>
     </header>
 
     <SessionPanel pack={pack} session={session} onSelect={setSelected} onIntensity={setSessionIntensity} onRemove={removeFromSession} onAddCombo={addCombo} onFinish={finishSession} />
 
     <section class="active-section" aria-labelledby="in-progress">
-      <div class="section-heading"><div><p class="eyebrow">YOUR CURRICULUM</p><h2 id="in-progress">In progress</h2></div><p>A first attempt begins Exploring. Move it to Practicing when the movement is familiar enough to work on deliberately.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">YOUR PARKOUR CURRICULUM</p><h2 id="in-progress">In progress</h2></div><p>A first attempt begins Exploring. Move it to Practicing when the movement is familiar enough to work on deliberately.</p></div>
       {active.length ? <div class="active-categories">{pack.categories.map(category => {
         const skills = active.filter(skill => skill.category === category.id);
         return skills.length ? <section key={category.id} class="active-category"><h3>{category.name}</h3>{skills.map(skill => <ProgressSkill key={skill.id} item={attentionBySkill.get(skill.id)!} state={progressOf(profile, skill.id)} inSession={inSession(skill.id)} onAdd={() => addToSession(skill.id)} onSelect={() => setSelected(skill.id)} />)}</section> : null;
@@ -147,7 +152,7 @@ export const App = ({ pack }: { pack: SkillPack }) => {
     </section>
 
     <section class="queue-section" aria-labelledby="needs-attention">
-      <div class="section-heading"><div><p class="eyebrow">TODAY</p><h2 id="needs-attention">Needs attention</h2></div><p>Movements in progress stay actionable here, alongside stale practice, maintenance, and useful new starts.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">PARKOUR TODAY</p><h2 id="needs-attention">Needs attention</h2></div><p>Parkour movements in progress stay actionable here, alongside overdue practice, maintenance, and useful new starts.</p></div>
       <div class="queue-list">{attention.slice(0, 6).map((item, index) => <SkillRow key={item.skill.id} item={item} index={index + 1} inSession={inSession(item.skill.id)} onAdd={() => addToSession(item.skill.id)} onSelect={() => setSelected(item.skill.id)} />)}</div>
     </section>
 
@@ -186,7 +191,7 @@ const SkillRow = ({ item, index, inSession, onAdd, onSelect }: { item: QueueItem
 
 const StretchSkill = ({ skill, missing, inSession, onAdd, onSelect }: { skill: Skill; missing: readonly Skill[]; inSession: boolean; onAdd: () => void; onSelect: () => void }) => <article class="stretch-skill"><button class="stretch-summary" onClick={onSelect}><strong>{skill.name}</strong><small>Suggested first: {missing.map(item => item.name).join(', ')}</small></button><button class={inSession ? 'in-session' : 'stretch-add'} onClick={onAdd} disabled={inSession}>{inSession ? 'In session' : 'Add as stretch'}</button></article>;
 
-const SkillCatalogue = ({ pack, profile, onSelect }: { pack: SkillPack; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => <section class="catalogue-section" aria-labelledby="catalogue"><div class="section-heading"><div><p class="eyebrow">EXPLORE</p><h2 id="catalogue">Practice map</h2></div><p>Browse every movement you practice. Details show its facets, capabilities, relationships, and how it fits into your own path.</p></div><div class="catalogue-grid">{pack.categories.map(category => { const skills = pack.skills.filter(skill => skill.category === category.id); return <section class="catalogue-category" key={category.id}><h3>{category.name}</h3><p>{category.description}</p><ul>{skills.map(skill => <li key={skill.id}><button onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{catalogueStatus(pack, profile, skill)}</small></button></li>)}</ul></section>; })}</div></section>;
+const SkillCatalogue = ({ pack, profile, onSelect }: { pack: SkillPack; profile: SkillProfile; onSelect: (skill: SkillId) => void }) => <section class="catalogue-section" aria-labelledby="catalogue"><div class="section-heading"><div><p class="eyebrow">EXPLORE</p><h2 id="catalogue">Practice map</h2></div><p>Browse every movement you practice. Details show its facets, capabilities, relationships, and how it fits into your own path.</p></div><div class="catalogue-grid">{pack.categories.map(category => { const skills = pack.skills.filter(skill => skill.category === category.id); return <section class="catalogue-category" key={category.id}><h3>{category.name}</h3><p>{category.description}</p><ul>{skills.map(skill => <li key={skill.id}><button onClick={() => onSelect(skill.id)}><strong>{skill.name}</strong><small>{practiceRoleName(skill)} · {catalogueStatus(pack, profile, skill)}</small></button></li>)}</ul></section>; })}</div></section>;
 
 const catalogueStatus = (pack: SkillPack, profile: SkillProfile, skill: Skill) => {
   const progress = progressOf(profile, skill.id);
@@ -204,7 +209,7 @@ const SkillDetail = ({ pack, skill, profile, inSession, onClose, onSelect, onAdd
   const state = progressOf(profile, skill.id);
   const alternatives = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${skill.name} ${skill.origin} tutorial`)}`;
   return <div class="overlay" role="presentation" onClick={onClose}><aside class="detail" role="dialog" aria-modal="true" aria-label={`${skill.name} details`} onClick={event => event.stopPropagation()}>
-    <button class="close" onClick={onClose} aria-label="Close details">×</button><p class="eyebrow">{pack.categories.find(category => category.id === skill.category)?.name.toUpperCase()} · {skill.origin.toUpperCase()}</p><h2>{skill.name}</h2><p class="description">{skill.description}</p>
+    <button class="close" onClick={onClose} aria-label="Close details">×</button><p class="eyebrow">{practiceRoleName(skill).toUpperCase()} · {pack.categories.find(category => category.id === skill.category)?.name.toUpperCase()} · {skill.origin.toUpperCase()}</p><h2>{skill.name}</h2><p class="description">{skill.description}</p>
     <MovementContext skill={skill} />
     <div class="tutorials">{skill.tutorialUrl && <a class="tutorial" href={skill.tutorialUrl} target="_blank" rel="noreferrer">Open tutorial ↗</a>}<a class="tutorial alternatives" href={alternatives} target="_blank" rel="noreferrer">Search for alternatives ↗</a></div>{!unlocked && <p class="model-note">The model suggests building the listed requirements first. You can still add this as a Stretch; completed practice establishes your own frontier.</p>}
     <Relationship title="Requires" skills={sources('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Common route from" skills={sources('progresses-to')} profile={profile} onSelect={onSelect} /><Relationship title="Transfers from" skills={sources('transfers-to')} profile={profile} onSelect={onSelect} /><Relationship title="Enables" skills={targets('requires')} profile={profile} onSelect={onSelect} /><Relationship title="Progresses to" skills={targets('progresses-to')} profile={profile} onSelect={onSelect} /><Relationship title="Transfers to" skills={targets('transfers-to')} profile={profile} onSelect={onSelect} />
@@ -243,7 +248,7 @@ const ComboBuilder = ({ pack, onAdd }: { pack: SkillPack; onAdd: (skills: readon
   };
   const add = () => { if (skills.length < 2) return; onAdd(skills); setSkills([]); setOpen(false); };
   const name = (skill: SkillId) => pack.skills.find(item => item.id === skill)?.name ?? skill;
-  return open ? <div class="combo-builder"><label>Add the next skill<select value="" onChange={choose}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !skills.includes(skill.id)).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label>{skills.length ? <ol>{skills.map(skill => <li key={skill}><span>{name(skill)}</span><button onClick={() => setSkills(current => current.filter(item => item !== skill))} aria-label={`Remove ${name(skill)} from combo`}>×</button></li>)}</ol> : <p>Add skills in the order you want to practice them.</p>}<div><button onClick={add} disabled={skills.length < 2}>Add combo</button><button onClick={() => setOpen(false)}>Cancel</button></div></div> : <button class="add-combo" onClick={() => setOpen(true)}>Combine skills</button>;
+  return open ? <div class="combo-builder"><label>Add the next skill<select value="" onChange={choose}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !skills.includes(skill.id)).map(skill => <option key={skill.id} value={skill.id}>{skillOptionName(skill)}</option>)}</optgroup>)}</select></label>{skills.length ? <ol>{skills.map(skill => <li key={skill}><span>{name(skill)}</span><button onClick={() => setSkills(current => current.filter(item => item !== skill))} aria-label={`Remove ${name(skill)} from combo`}>×</button></li>)}</ol> : <p>Add skills in the order you want to practice them.</p>}<div><button onClick={add} disabled={skills.length < 2}>Add combo</button><button onClick={() => setOpen(false)}>Cancel</button></div></div> : <button class="add-combo" onClick={() => setOpen(true)}>Combine skills</button>;
 };
 
 const SessionHistory = ({ pack, history, onSelect, onEdit, onRemove, onEraseAll, onExport, onImport }: { pack: SkillPack; history: ReturnType<typeof completedSessions>; onSelect: (skill: SkillId) => void; onEdit: (session: CompletedSession) => void; onRemove: (sessionId: string) => void; onEraseAll: () => void; onExport: () => void; onImport: (file: File) => void }) => {
@@ -265,7 +270,7 @@ const SessionEditor = ({ pack, session, onClose, onSave }: { pack: SkillPack; se
     <button class="close" onClick={onClose} aria-label="Close editor">×</button><p class="eyebrow">PRACTICE HISTORY</p><h2>Edit workout</h2><p class="description">Correct when it happened, what you practiced, and how hard it felt.</p>
     <label class="date-field">Date<input type="date" value={draft.date} onInput={event => setDraft(current => ({ ...current, date: event.currentTarget.value }))} /></label>
     <div class="editor-entries">{draft.entries.map(entry => <article key={sessionEntryId(entry)} class="session-entry"><strong>{sessionEntryName(pack, entry)}</strong><div class="intensity-picker">{(['light', 'medium', 'intensive'] as const).map(intensity => <button key={intensity} class={entry.intensity === intensity ? 'selected' : ''} onClick={() => updateEntry(sessionEntryId(entry), current => ({ ...current, intensity }))}>{title(intensity)}</button>)}</div><button class="remove-session" onClick={() => removeEntry(sessionEntryId(entry))} aria-label={`Remove ${sessionEntryName(pack, entry)} from this workout`}>×</button></article>)}</div>
-    <label class="add-skill">Add another skill<select value="" onChange={event => addEntry(event.currentTarget.value)}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !draft.entries.some(entry => sessionEntrySkills(entry).includes(skill.id))).map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</optgroup>)}</select></label>
+    <label class="add-skill">Add another skill<select value="" onChange={event => addEntry(event.currentTarget.value)}><option value="">Choose a skill…</option>{pack.categories.map(category => <optgroup key={category.id} label={category.name}>{pack.skills.filter(skill => skill.category === category.id && !draft.entries.some(entry => sessionEntrySkills(entry).includes(skill.id))).map(skill => <option key={skill.id} value={skill.id}>{skillOptionName(skill)}</option>)}</optgroup>)}</select></label>
     <ComboBuilder pack={pack} onAdd={addCombo} />
     <button class="finish-session" onClick={() => onSave(draft)} disabled={!draft.date || draft.entries.length === 0}>Save workout</button>
   </aside></div>;

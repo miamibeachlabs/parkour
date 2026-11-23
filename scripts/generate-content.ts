@@ -1,5 +1,5 @@
 import { parseDocument } from 'yaml';
-import type { FacetDimension, Relation, SkillPack } from '../src/domain/SkillGraph.ts';
+import type { FacetDimension, PracticeRole, Relation, SkillPack } from '../src/domain/SkillGraph.ts';
 
 type RecordValue = Record<string, unknown>;
 type Importance = 'foundational' | 'useful' | 'optional';
@@ -13,6 +13,7 @@ const importance: Readonly<Record<Importance, 1 | 2 | 3>> = {
   useful: 2,
   optional: 1,
 };
+const practiceRoles: readonly PracticeRole[] = ['parkour', 'supporting'];
 const facetDimensions = new Set<FacetDimension>([
   'pattern', 'direction', 'action', 'body-orientation', 'support',
   'contact', 'symmetry', 'body-shape', 'dynamics', 'assistance',
@@ -78,6 +79,8 @@ export const generateParkour = async () => {
     if (!categoryIds.has(category)) fail(`skills[${index}] uses unknown category '${category}'.`);
     const ranking = text(item.importance, `skills[${index}].importance`) as Importance;
     if (!(ranking in importance)) fail(`skills[${index}].importance must be foundational, useful, or optional.`);
+    const practiceRole = text(item['practice-role'], `skills[${index}].practice-role`) as PracticeRole;
+    if (!practiceRoles.includes(practiceRole)) fail(`skills[${index}].practice-role must be parkour or supporting.`);
     const tutorial = item.tutorial === undefined ? undefined : text(item.tutorial, `skills[${index}].tutorial`);
     return {
       id: text(item.id, `skills[${index}].id`),
@@ -85,6 +88,7 @@ export const generateParkour = async () => {
       category,
       importance: importance[ranking],
       origin: item.origin === undefined ? 'parkour' : text(item.origin, `skills[${index}].origin`),
+      practiceRole,
       description: text(item.description, `skills[${index}].description`),
       ...(tutorial ? { tutorialUrl: tutorial } : {}),
     };

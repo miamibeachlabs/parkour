@@ -24,6 +24,7 @@ export type QueueItem = Readonly<{
   priority: number;
   freshness: Freshness;
   daysSincePractice?: number;
+  daysOverdue?: number;
   lastPracticeIntensity?: PracticeIntensity;
   categoryIsStale: boolean;
   reasons: readonly string[];
@@ -88,9 +89,15 @@ const latestPractice = (
   return undefined;
 };
 
-const debt = (practice: PracticeRecency | undefined) =>
-  practice === undefined ? 1
-    : Math.min(1, practice.daysSincePractice / reserveDays[practice.intensity]);
+const attentionPressure = (practice: PracticeRecency | undefined) => {
+  if (practice === undefined) return 1;
+  const ratio = practice.daysSincePractice / reserveDays[practice.intensity];
+  return ratio <= 1 ? ratio : 1 + Math.log2(ratio);
+};
+
+const daysOverdue = (practice: PracticeRecency | undefined) =>
+  practice === undefined ? undefined
+    : Math.max(0, practice.daysSincePractice - reserveDays[practice.intensity]);
 
 const freshness = (practice: PracticeRecency | undefined): Freshness =>
   practice === undefined || practice.daysSincePractice >= reserveDays[practice.intensity] ? 'stale'
@@ -107,8 +114,8 @@ export const practiceQueue = (
   .map(skill => {
     const skillPractice = latestPractice(profile, pack, asOf, skill.id);
     const categoryPractice = latestPractice(profile, pack, asOf, undefined, skill.category);
-    const skillDebt = debt(skillPractice);
-    const categoryDebt = debt(categoryPractice);
+    const skillDebt = attentionPressure(skillPractice);
+    const categoryDebt = attentionPressure(categoryPractice);
     const progress = progressOf(profile, skill.id);
     const inProgress = isInProgress(progress);
     const unlocks = outgoing(pack, skill.id, 'requires').length;
@@ -135,6 +142,7 @@ export const practiceQueue = (
       priority,
       freshness: freshness(skillPractice),
       daysSincePractice: skillPractice?.daysSincePractice,
+      daysOverdue: daysOverdue(skillPractice),
       lastPracticeIntensity: skillPractice?.intensity,
       categoryIsStale: freshness(categoryPractice) === 'stale',
       reasons,

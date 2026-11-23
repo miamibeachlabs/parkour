@@ -28,96 +28,112 @@ skills:
   - id: animal-landing
     name: Animal landing
     category: impact
+    practice-role: parkour
     importance: foundational
     description: Absorb a landing quietly through ankles, knees, and hips.
     tutorial: https://www.youtube.com/watch?v=Ww2Ui0BftaI
   - id: sideways-roll
     name: Sideways roll
     category: impact
+    practice-role: parkour
     importance: foundational
     description: A low-risk roll pattern for distributing impact.
     tutorial: https://www.youtube.com/watch?v=uqPFIa4RFPk
   - id: shoulder-roll
     name: Shoulder roll
     category: impact
+    practice-role: parkour
     importance: foundational
     description: Route forward momentum diagonally across the upper back, away from neck and spine.
     tutorial: https://www.youtube.com/watch?v=fGpU2fsEYuM
   - id: monkey-walk
     name: Monkey walk
     category: ground
+    practice-role: parkour
     importance: useful
     description: Low four-point locomotion for weight transfer and joint comfort.
     tutorial: https://www.youtube.com/watch?v=1jS4AbKr30w
   - id: quadrupedal-movement
     name: Quadrupedal movement
     category: ground
+    practice-role: parkour
     importance: useful
     description: Move forward, backward, and sideways on hands and feet with a stable trunk.
     tutorial: https://www.youtube.com/watch?v=ApYvgfOlkxI
   - id: ground-kong
     name: Ground kong
     category: ground
+    practice-role: parkour
     importance: useful
     description: A floor-level kong pattern for hand placement and hip drive.
     tutorial: https://www.youtube.com/watch?v=IG1yR4k0ypI
   - id: safety-vault
     name: Safety vault
     category: vaults
+    practice-role: parkour
     importance: useful
     description: Pass an obstacle while retaining a hand and foot for control.
     tutorial: https://www.youtube.com/watch?v=Cs4GtrzA8Ao
   - id: sit-spin-vault
     name: Sit-spin vault
     category: vaults
+    practice-role: parkour
     importance: optional
     description: A controlled seated rotation around an obstacle.
     tutorial: https://www.youtube.com/watch?v=Lz6df5KsPdU
   - id: turn-vault
     name: Turn vault
     category: vaults
+    practice-role: parkour
     importance: optional
     description: Clear an obstacle and reorient to land facing back toward it.
     tutorial: https://www.youtube.com/watch?v=Q3SSiBaYvEM
   - id: kong-vault
     name: Kong vault
     category: vaults
+    practice-role: parkour
     importance: useful
     description: Drive hips and legs between planted hands, beginning over very low obstacles.
     tutorial: https://www.youtube.com/watch?v=ZX5AGLw5hb8
   - id: precision-landing
     name: Precision landing
     category: jumping
+    practice-role: parkour
     importance: foundational
     description: Land accurately on a marked or narrow target with quiet absorption.
     tutorial: https://www.youtube.com/watch?v=CD_W8BYNs2k
   - id: standing-jump
     name: Standing jump
     category: jumping
+    practice-role: parkour
     importance: useful
     description: Produce horizontal distance from a stable two-foot takeoff.
     tutorial: https://www.youtube.com/watch?v=K8DtVb0ydc8
   - id: plyometric-jumps
     name: Plyometric jumps
     category: jumping
+    practice-role: parkour
     importance: optional
     description: Elastic rebounding jumps, added only after ordinary jump volume is comfortable.
     tutorial: https://www.youtube.com/watch?v=cytB585tI8U
   - id: running-jump
     name: Running jump
     category: jumping
+    practice-role: parkour
     importance: useful
     description: Turn approach speed into a deliberate takeoff and stable landing.
     tutorial: https://www.youtube.com/watch?v=_D6WsID--IQ
   - id: strides
     name: Strides
     category: jumping
+    practice-role: parkour
     importance: optional
     description: Link alternating takeoffs across targets while maintaining rhythm and line.
     tutorial: https://www.youtube.com/watch?v=IAnd7gSgHGg
   - id: wall-run
     name: Wall run
     category: vertical
+    practice-role: parkour
     importance: optional
     description: Use a purposeful foot contact to gain height or redirect movement.
     tutorial: https://www.youtube.com/watch?v=cnijAVbly84
@@ -125,6 +141,7 @@ skills:
     name: Ginga
     category: ground
     origin: capoeira
+    practice-role: supporting
     importance: useful
     description: A relaxed, shifting base that builds rhythm, coordination, and transitions between positions.
     tutorial: https://www.youtube.com/watch?v=HbUxXJKitS4
@@ -132,6 +149,7 @@ skills:
     name: Negativa
     category: ground
     origin: capoeira
+    practice-role: supporting
     importance: useful
     description: A low, supported position for moving safely between standing and the ground.
     tutorial: https://www.youtube.com/watch?v=iRb8inBYpf0
@@ -139,6 +157,7 @@ skills:
     name: Rolê
     category: ground
     origin: capoeira
+    practice-role: supporting
     importance: useful
     description: A circular ground transition that links supported positions with a return to movement.
     tutorial: https://www.youtube.com/watch?v=YkjKw8FPA6Y
@@ -146,6 +165,7 @@ skills:
     name: Meia-lua de frente
     category: rotation
     origin: capoeira
+    practice-role: supporting
     importance: optional
     description: A controlled front crescent kick for rotational coordination and balance.
     tutorial: https://www.youtube.com/watch?v=mQkcWdbaV3o
@@ -153,6 +173,7 @@ skills:
     name: Queixada
     category: rotation
     origin: capoeira
+    practice-role: supporting
     importance: optional
     description: A turning, outside-in kick that develops rotation and controlled reorientation.
     tutorial: https://www.youtube.com/watch?v=-VlCCRnKfLs
@@ -160,6 +181,7 @@ skills:
     name: Armada
     category: rotation
     origin: capoeira
+    practice-role: supporting
     importance: optional
     description: A spinning kick practiced for deliberate turning, orientation, and balance.
     tutorial: https://www.youtube.com/watch?v=mPVHfPh9nPU
@@ -167,6 +189,7 @@ skills:
     name: Pogos
     category: jumping
     origin: calisthenics
+    practice-role: supporting
     importance: useful
     description: Small, controlled two-foot rebounds that develop ankle elasticity and quiet reactive landings.
     tutorial: https://www.youtube.com/watch?v=PdhY2bCMJgQ
@@ -174,6 +197,7 @@ skills:
     name: Skipping drills
     category: jumping
     origin: calisthenics
+    practice-role: supporting
     importance: useful
     description: Light skipping and B-skip patterns for rhythm, coordination, and springy running mechanics.
     tutorial: https://alpfitness.com/knowledge-base/running-drills/
@@ -181,6 +205,7 @@ skills:
     name: Bear walk
     category: ground
     origin: animal-flow
+    practice-role: supporting
     importance: useful
     description: Travel from bear position with coordinated hands and feet beneath a stable trunk.
     tutorial: https://gmb.io/bear/
@@ -188,6 +213,7 @@ skills:
     name: Bear position
     category: ground
     origin: animal-flow
+    practice-role: supporting
     importance: useful
     description: A straight- or near-straight-legged four-point support position that prepares bear walking and ground transitions.
     tutorial: https://gmb.io/bear/
@@ -195,6 +221,7 @@ skills:
     name: Crab walk
     category: ground
     origin: animal-flow
+    practice-role: supporting
     importance: useful
     description: Travel from reverse tabletop with coordinated hands and feet behind the body.
     tutorial: https://help.gmb.io/article/553-additional-exercise-tutorials-help
@@ -202,6 +229,7 @@ skills:
     name: Reverse tabletop
     category: ground
     origin: mobility
+    practice-role: supporting
     importance: useful
     description: A face-up hands-and-feet support position with an open chest, used as the base for crab walking and ground transitions.
     tutorial: https://help.gmb.io/article/553-additional-exercise-tutorials-help
@@ -209,6 +237,7 @@ skills:
     name: Lizard walk
     category: ground
     origin: animal-flow
+    practice-role: supporting
     importance: optional
     description: Low crawling locomotion that asks for coordinated shoulder support and hip movement.
     tutorial: https://www.youtube.com/watch?v=NX6JvqPqWio
@@ -216,6 +245,7 @@ skills:
     name: Bar hang
     category: vertical
     origin: calisthenics
+    practice-role: supporting
     importance: useful
     description: A relaxed or active hang for grip, shoulder comfort, and vertical body support.
     tutorial: https://gmb.io/hanging/
@@ -223,6 +253,7 @@ skills:
     name: Cartwheel / au
     category: rotation
     origin: capoeira
+    practice-role: supporting
     importance: useful
     description: A controlled sideways inversion that returns smoothly to standing.
     tutorial: https://www.youtube.com/watch?v=Br3rusbuKPY
@@ -230,6 +261,7 @@ skills:
     name: Wheel pose
     category: rotation
     origin: mobility
+    practice-role: supporting
     importance: optional
     description: A full hands-and-feet backbend used for shoulder range, spinal extension, and inverted support.
     tutorial: https://gmb.io/bridge/
@@ -237,6 +269,7 @@ skills:
     name: Low au
     category: rotation
     origin: capoeira
+    practice-role: supporting
     importance: useful
     description: A low, compact cartwheel variation with close-to-ground feet.
     tutorial: https://www.youtube.com/watch?v=QOo21W_rR54
@@ -244,6 +277,7 @@ skills:
     name: Meia-lua de compasso
     category: rotation
     origin: capoeira
+    practice-role: supporting
     importance: optional
     description: A turning, hands-supported kicking pattern that combines hinge, rotation, and reorientation.
     tutorial: https://www.youtube.com/watch?v=IiLqVCyyoPs
@@ -251,6 +285,7 @@ skills:
     name: Lunges
     category: capacity
     origin: general-training
+    practice-role: supporting
     importance: useful
     description: Controlled stepping lunges for single-leg strength, hip range, and balance.
     tutorial: https://gmb.io/bodyweight-leg-exercises/
@@ -258,6 +293,7 @@ skills:
     name: Walking front kicks
     category: capacity
     origin: mobility
+    practice-role: supporting
     importance: optional
     description: Slow walking front kicks used as dynamic leg mobility and balance practice.
     tutorial: https://fitbod.me/exercises/walking-front-kicks
@@ -265,6 +301,7 @@ skills:
     name: Bag work
     category: capacity
     origin: striking
+    practice-role: supporting
     importance: optional
     description: Controlled striking or kicking rounds for conditioning and coordinated force production.
     tutorial: https://www.youtube.com/watch?v=r1x-LrAnS10
