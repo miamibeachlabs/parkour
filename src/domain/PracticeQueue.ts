@@ -95,9 +95,11 @@ const attentionPressure = (practice: PracticeRecency | undefined) => {
   return ratio <= 1 ? ratio : 1 + Math.log2(ratio);
 };
 
-const daysOverdue = (practice: PracticeRecency | undefined) =>
-  practice === undefined ? undefined
-    : Math.max(0, practice.daysSincePractice - reserveDays[practice.intensity]);
+const daysOverdue = (practice: PracticeRecency | undefined) => {
+  if (practice === undefined) return undefined;
+  const overdue = practice.daysSincePractice - reserveDays[practice.intensity];
+  return overdue < 0 ? undefined : overdue;
+};
 
 const freshness = (practice: PracticeRecency | undefined): Freshness =>
   practice === undefined || practice.daysSincePractice >= reserveDays[practice.intensity] ? 'stale'
