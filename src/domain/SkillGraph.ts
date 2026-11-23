@@ -21,6 +21,7 @@ export type SkillState = 'exploring' | 'practicing' | 'acquired';
 export type SkillProgress = 'untried' | SkillState;
 export type PracticeIntensity = 'light' | 'medium' | 'intensive';
 export type SessionApproach = 'ready' | 'stretch';
+export type PracticeRole = 'parkour' | 'supporting';
 
 export type Category = Readonly<{
   id: CategoryId;
@@ -35,6 +36,7 @@ export type Skill = Readonly<{
   category: CategoryId;
   importance: 1 | 2 | 3;
   origin: string;
+  practiceRole: PracticeRole;
   facets: MovementFacets;
   capabilities: CapabilityLinks;
   uses: readonly string[];
